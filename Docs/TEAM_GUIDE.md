@@ -1,229 +1,211 @@
-# PolishCow 
+﻿# PolishCow — hướng dẫn làm việc cho team
 
-Hướng dẫn kỹ thuật base dùng chung, API và kế hoạch hai giai đoạn. Cấu trúc: [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md). Quy trình nhánh: [GIT_WORKFLOW.md](GIT_WORKFLOW.md).
+Đọc file này để dùng base chung. Hướng dẫn triển khai cả bốn tính năng: [CODING_GUIDE.md](CODING_GUIDE.md). Tra đường dẫn tại [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md); tạo nhánh và bàn giao theo [GIT_WORKFLOW.md](GIT_WORKFLOW.md).
 
-## 1. Chuẩn bị
+## 1. Bắt đầu trong 5 bước
 
-Đã đọc code, Main, bốn scene thử và prefab hiện có. Các scene đều có một kho và một InventoryHUD trỏ kho của scene; Player Caveman, collider, di chuyển, hướng nhìn, tương tác E và các mẫu đã có. Tiếp tục dùng CowSample, ProductionSample, BuildingSample, OrderSample, không dựng lại Main/map/Player.
+1. Mở project bằng Unity **6000.6.2f1**, đợi import và biên dịch xong.
+2. Chuyển sang nhánh của mình, mở scene thử trong `Assets/_Game/Scenes/Tests/` phù hợp với tính năng đang làm.
+3. Làm trong `FeatureWork` và thư mục tính năng của mình. Dùng Player, kho và HUD có sẵn.
+4. Gán `FeatureReferences`, dùng API kho và điểm nối chung ở mục 4–7.
+5. Play thử, hoàn thành checklist ở mục 9 rồi tạo PR.
 
-Code hiện có FeatureReferences/Initialize, UpgradeTarget/ApplyLevel, RoamingArea và PowerSource. Đã kiểm tra trên đĩa có DummyCowBarn/DummyMachine cùng .meta, vùng đi/điện trong scene thử và tài nguyên thử đúng bảng bên dưới. Log Editor ghi Audit đạt 5/5 scene; kết quả này không thay cho Verify/Play.
+**Base hiện có:** Player, tương tác E, kho/HUD, scene và prefab mẫu, Initialize, nâng cấp, vùng đi và nguồn điện. Các mẫu chủ yếu kiểm tra điểm nối; thành viên cần triển khai gameplay thật.
 
-1. Thoát Play, đợi biên dịch; tự lưu các scene thử/prefab đang sửa dở.
-2. Chạy **Tools → PolishCow → Prepare Parallel Feature Base**. Menu gọi lại Prepare Independent Feature Tests: bổ sung điểm nối, tạo DummyBuilding/DummyCowBarn/DummyMachine còn thiếu, thêm vùng đi/nguồn điện thử, đặt tài nguyên và lưu scene. Hai menu chuẩn bị dùng chung logic, chỉ cần chạy một. Nếu scene thử hoặc Prefab Stage đang dirty, menu dừng để tránh lưu chồng phần đang sửa.
-3. Chạy **Audit Team Workspace**, **Verify Independent Feature Contracts** và **Verify Parallel Feature Base**; sau đó Play từng scene. Verify chỉ kiểm tra Edit Mode.
-4. Nếu thiếu scene, chạy **Prepare Team Workspace** trước. Scene/prefab cũ không bị ghi đè; lỗi Audit vẫn cần sửa, không coi việc bỏ qua là đã hoàn thiện.
+## 2. Quy ước dùng code chung
 
-Không đổi Main, map, Player, HUD, tài nguyên prefab TeamServices hoặc logic thành viên. Không Apply dữ liệu scene thử ngược prefab chung. Các menu chạy thủ công qua Unity Editor API, không auto-run khi reload, ExecuteAlways, singleton, reflection hoặc package mới; không ghi YAML/.meta bằng tay.
+Mọi tính năng trao đổi tài nguyên qua `InventoryManager`. Máy không gọi script bò; đơn hàng không gọi máy; Building không sửa biến riêng của bò/máy.
 
-## 2. Phân công
+**Cần trao đổi người phụ trách base trước khi sửa:** Main; kho/HUD; Player và hệ tương tác; Core; WorldDepthSorting; công cụ Editor; prefab Shared/World; Art/import settings; ProjectSettings/Packages và tài liệu base. Thành viên sửa code, prefab và scene tính năng của mình. Building được thay `BuildingConnectionSample` bằng logic thật nhưng giữ hợp đồng Initialize/ApplyLevel và prefab giả để đối chiếu.
 
-Đường dẫn tính từ Assets/_Game/.
+## 3. Chuẩn bị scene thử — người phụ trách base
 
-| Người | Nhánh Git gợi ý | Scene | Code / Prefab | Đầu vào → đầu ra |
-| --- | --- | --- | --- | --- |
-| Base/tích hợp | base/integration | Scenes/Main.unity | Scripts/Core, code base, Prefabs/Shared | Điểm nối chung, ghép prefab và kiểm thử Main |
-| Cows | feature/cows | Scenes/Tests/CowTest.unity | Scripts/Features/Cows, Prefabs/Features/Cows | Feed → RawMilk |
-| Production | feature/production | Scenes/Tests/ProductionTest.unity | Scripts/Features/Production, Prefabs/Features/Production | RawMilk → BottledMilk |
-| Building | feature/building-upgrades | Scenes/Tests/BuildingTest.unity | Scripts/Features/Building, Prefabs/Features/Building | Trừ Credits, tạo/nâng cấp công trình |
-| Orders | feature/orders | Scenes/Tests/OrderTest.unity | Scripts/Features/Orders, Prefabs/Features/Orders | BottledMilk → Credits; mua thức ăn: Credits → Feed |
+Base chuẩn bị và commit scene/prefab cùng `.meta` một lần, rồi team lấy cùng phiên bản. Thành viên không cần chạy lại setup hằng ngày vì menu có thể sửa cả bốn scene.
 
-Chỉ trao đổi tài nguyên qua InventoryManager. Máy không tham chiếu script bò, đơn hàng không tham chiếu máy, Building không sửa biến riêng của Cow/Machine. Người Orders triển khai điểm mua thức ăn theo quy tắc Credits → Feed.
+1. Thoát Play, lưu scene/prefab đang sửa và đợi biên dịch. Menu dừng nếu scene thử hoặc Prefab Stage còn thay đổi chưa lưu.
+2. Nếu thiếu scene, chạy **Tools → PolishCow → Prepare Team Workspace**. Menu tạo phần còn thiếu, không ghi đè scene/prefab cũ.
+3. Chạy **Prepare Parallel Feature Base**. Menu dùng chung logic với **Prepare Independent Feature Tests**; chỉ cần chạy một trong hai.
+4. Chạy **Audit Team Workspace**, **Verify Independent Feature Contracts**, **Verify Parallel Feature Base**.
+5. Play riêng từng scene và kiểm tra theo mục 9. Audit/Verify chỉ kiểm tra Edit Mode.
 
-| Scene | Dữ liệu menu đặt tuyệt đối | Cách thử |
+| Scene | Ô tài nguyên được đặt lại | Đối tượng hỗ trợ |
 | --- | --- | --- |
-| CowTest | Feed=20 | CowSample; TestRoamingArea để người 2 gán vào script di chuyển |
-| ProductionTest | RawMilk=50 | ProductionSample và TestPowerSource; không cần bò |
-| BuildingTest | Credits=1000 | BuildingSample và DummyBuilding; có thể chọn DummyCowBarn/DummyMachine trong Inspector |
-| OrderTest | BottledMilk=100, Credits=100 | OrderSample, panel/nút/E, đọc BottledMilk; không cần máy |
+| CowTest | Feed = 20 | CowSample, TestRoamingArea |
+| ProductionTest | RawMilk = 50 | ProductionSample, TestPowerSource |
+| BuildingTest | Credits = 1000 | BuildingSample, DummyBuilding/DummyCowBarn/DummyMachine |
+| OrderTest | BottledMilk = 100, Credits = 100 | OrderSample, panel/nút/E |
 
-Chỉ các ô trong bảng được reset; các ô khác giữ nguyên. Chạy lại vẫn 20/50/1000/100, không cộng thêm. Đây là reset dữ liệu thử có chủ đích: số thành viên đã sửa ở các ô đó sẽ về số trong bảng; vị trí, script, callback và dữ liệu tính năng khác giữ nguyên. Main và prefab kho không nhận các số này.
+**Prepare đặt số tuyệt đối, không cộng thêm.** Các ô khác giữ nguyên; Main và prefab kho không nhận số thử. Không chạy lại khi cần giữ trạng thái gameplay đang thử, không Apply dữ liệu này về prefab chung.
 
-Không sửa trực tiếp chữ HUD. Khi Play, InventoryHUD.OnEnable đọc kho và hiển thị số đầu. Scene thử là bản chụp độc lập, không tự cập nhật theo Main. Chỉ Play một scene mỗi lần, làm việc dưới FeatureWork, không kéo thêm kho/HUD/Player thứ hai.
+Scene thử là bản độc lập, không tự cập nhật theo Main. Mỗi scene chỉ có một Player, một kho, một HUD và một EventSystem; OrderCanvas là UI đơn hàng riêng. Không kéo thêm TeamServices/Player. Setup không tự gán vùng đi/nguồn điện vào script thành viên; cần gán qua Inspector.
 
-## 3. Kho và HUD
+## 4. Lấy kho qua FeatureReferences
 
-API thực tế giữ nguyên:
+Mỗi prefab tính năng có đúng một `FeatureReferences` ở gốc. Script tính năng khai báo và gán component này trong Prefab Mode:
 
 ```csharp
-int amount = inventory.GetAmount(ItemType.Feed);
-inventory.Add(ItemType.RawMilk, 1);
-bool removed = inventory.TryRemove(ItemType.Feed, 1);
+[SerializeField] private FeatureReferences featureReferences;
 ```
 
-Đây là ví dụ API, không tự chạy trong mẫu. GetAmount trả int; Add trả void, từ chối số <=0/tràn int; TryRemove trả bool, từ chối số <=0/không đủ. Chỉ trao kết quả khi TryRemove thành công. ItemType có Credits, Feed, RawMilk, BottledMilk. Không có InventoryManager.Instance hoặc SetAmount.
+| Đối tượng | Cách gán kho |
+| --- | --- |
+| Đặt sẵn trong scene | Gán kho scene vào Inventory của `FeatureReferenceInitializer`; thêm FeatureReferences của instance vào mảng Features |
+| Tạo khi Play | Người tạo gọi `Initialize(inventory)` ngay sau `Instantiate` |
 
-Kho phát OnChanged sau Add/TryRemove thành công. InventoryHUD đã đăng ký/bỏ đăng ký sự kiện; tính năng không sửa Text/icon và không tự phát OnChanged. Sửa số trong Inspector lúc Play không gọi API nên không tự phát sự kiện.
-
-TeamServices.prefab chứa GameSystems/InventoryManager và Canvas/InventoryHUD, giữ tham chiếu HUD → kho nội bộ. Scene thử đã có cả hai, không kéo thêm prefab này. Player.Interaction Hint là tham chiếu ngoài prefab Player, cần gán chữ Canvas/HUD/InteractionHint tại scene.
-
-## 4. FeatureReferences và Initialize
-
-API gán kho hiện có:
-
-- Core/FeatureReferences.cs: `public InventoryManager Inventory { get; private set; }`, `public void Initialize(InventoryManager inventory)`.
-- Core/FeatureReferenceInitializer.cs: SerializeField InventoryManager và mảng FeatureReferences; Awake Initialize mỗi phần tử khác null. Không Find hoặc singleton.
-
-Initialize từ chối null, giữ tham chiếu hợp lệ cũ nếu có. Gọi lại cùng kho chỉ gán tham chiếu, không sinh tài nguyên/gameplay.
-
-Prefab gốc của mỗi tính năng có đúng một FeatureReferences. Script tính năng khai báo `[SerializeField] private FeatureReferences featureReferences;` và kéo component trên gốc vào ô này trong Prefab Mode. Không lưu tham chiếu kho scene vào prefab.
-
-Với prefab đặt sẵn: trong scene, kéo **TeamServices/GameSystems** vào Inventory của FeatureReferenceInitializer, thêm FeatureReferences của các instance vào mảng Features. Menu làm việc này cho mẫu; chỉ thêm phần tử còn thiếu, không xóa danh sách cũ.
-
-Không xử lý gameplay cần kho trong Awake/OnEnable của tính năng. Awake chỉ lấy component nội bộ; Interact/Update/phương thức sản xuất kiểm tra đã Initialize. Không dựa vào thứ tự Awake. Tương tác E trong Update chạy sau các Awake của scene.
-
-Với prefab tạo khi Play, người tạo gọi Initialize ngay sau Instantiate:
+Ví dụ tạo prefab, sau khi kiểm tra `buildingPrefab`, `spawnPoint`, `inventory` khác null và prefab có FeatureReferences ở gốc:
 
 ```csharp
-GameObject instance = Instantiate(buildingPrefab, spawnPoint.position, spawnPoint.rotation);
-FeatureReferences references = instance.GetComponent<FeatureReferences>();
-if (references == null)
-{
-    Debug.LogError("Prefab thiếu FeatureReferences ở gốc.");
+GameObject instance = Instantiate(
+    buildingPrefab, spawnPoint.position, spawnPoint.rotation);
+instance.GetComponent<FeatureReferences>().Initialize(inventory);
+```
+
+Instance runtime không cần thêm vào mảng Initializer. Không lưu kho của scene vào prefab, không dùng Find hoặc singleton để tìm kho.
+
+`Initialize(null)` bị từ chối và giữ tham chiếu hợp lệ cũ. Gọi lại cùng kho không sinh tài nguyên/gameplay. `FeatureReferences.Inventory` null trong Edit Mode là bình thường.
+
+**Awake/OnEnable của tính năng không chạy gameplay cần kho.** Awake chỉ lấy component nội bộ; Interact/Update/phương thức sản xuất phải kiểm tra đã Initialize. Không dựa vào thứ tự Awake.
+
+### API kho và HUD
+
+```csharp
+if (featureReferences == null || featureReferences.Inventory == null)
     return;
-}
-references.Initialize(inventory);
-```
 
-Kiểm tra buildingPrefab, spawnPoint, inventory khác null trước đoạn trên. Người tạo lấy inventory từ FeatureReferences của mình hoặc tham chiếu Inspector của scene. Không cần thêm instance runtime vào mảng Initializer vì người tạo đã Initialize trực tiếp.
-
-InventoryInteractionSample được chỉnh tiếp, từ chối chạy nếu chưa Initialize. Ô inventory cũ được giữ để không mất dữ liệu scene/prefab và tương thích Audit; mẫu không đọc kho gameplay từ ô cũ. Code mới dùng FeatureReferences.
-
-Menu bổ sung điểm nối cho bốn prefab mẫu và Shared/InteractableSample, giữ hình/collider/callback. Đây là chỉnh trong Prefab Mode, không Apply tài nguyên scene vào asset. Player.prefab, TeamServices.prefab và các prefab World giữ nguyên.
-
-## 5. Tương tác chung
-
-Ví dụ code của người làm Cows, lưu tại Scripts/Features/Cows/CowInteraction.cs:
-
-```csharp
-using UnityEngine;
-public class CowInteraction : Interactable
+InventoryManager inventory = featureReferences.Inventory;
+int feed = inventory.GetAmount(ItemType.Feed);
+if (inventory.TryRemove(ItemType.Feed, 1))
 {
-    [SerializeField] private FeatureReferences featureReferences;
-    public override void Interact()
-    {
-        if (featureReferences == null || featureReferences.Inventory == null)
-        {
-            Debug.LogWarning("Bò chưa Initialize.", this);
-            return;
-        }
-        InventoryManager inventory = featureReferences.Inventory;
-        int feed = inventory.GetAmount(ItemType.Feed);
-        Debug.Log("Thức ăn để thử: " + feed, this);
-    }
+    inventory.Add(ItemType.RawMilk, 1); // Ví dụ trao đổi tài nguyên.
 }
 ```
 
-Tháo InventoryInteractionSample khi thay bằng tương tác thật; không gắn hai Interactable trên cùng đối tượng. Sửa Interaction Text trong Inspector. PlayerInteraction đã đọc E, chọn mục tiêu và hiện gợi ý; tính năng không viết thêm hệ thống đọc E.
+- `ItemType`: Credits, Feed, RawMilk, BottledMilk.
+- `GetAmount` trả `int`; `Add` trả `void`, từ chối số ≤ 0 hoặc tràn int.
+- `TryRemove` trả `bool`, từ chối số ≤ 0 hoặc không đủ. Chỉ trao kết quả khi trả về true.
+- Không có `InventoryManager.Instance` hoặc `SetAmount`.
+- Kho phát `OnChanged` sau thay đổi thành công; HUD tự cập nhật và đọc số đầu trong OnEnable. Không sửa chữ/icon HUD hoặc tự phát sự kiện.
+- Đổi số trong Inspector lúc Play không gọi API nên không phát `OnChanged`.
 
-Collider2D cần bật, nằm cùng đối tượng hoặc con của Interactable. LayerMask Player chứa layer collider; trigger cần Physics2D Queries Hit Triggers bật. Gốc Interactable phải gần chỗ Player tiếp cận được, bán kính hiện 1.5. InteractionPoint chỉ đánh dấu hiệu ứng/biểu tượng.
+## 5. Tương tác E và nút UI
 
-DeliverButton gọi InventoryInteractionSample.Interact trong cùng OrderSample, cũng chặn khi chưa Initialize. Nếu thay component đơn hàng, gán lại OnClick. Hiện chỉ ghi Console, không trừ sữa.
+Kế thừa `Interactable`, override `Interact()` và kiểm tra kho như mục 4. PlayerInteraction đã chọn mục tiêu, đọc E và hiện gợi ý; tính năng không viết thêm hệ thống đọc E.
 
-## 6. Nâng cấp chung
+Khi thay tương tác mẫu, tháo `InventoryInteractionSample`; không gắn hai Interactable trên cùng đối tượng. Code mới dùng FeatureReferences để lấy kho.
 
-UpgradeTarget là MonoBehaviour với `public virtual void ApplyLevel(int level)`, cấp hợp lệ từ 1. CowUpgrade/MachineUpgrade sau này kế thừa nó; override cũng phải từ chối level <1.
+Để E hoạt động:
 
-Building quản lý giá, thanh toán và cấp hiện tại. Chỉ gọi ApplyLevel sau TryRemove(Credits, price) thành công. Giữ tham chiếu kiểu UpgradeTarget qua Inspector, không cần biết script bò/máy cụ thể và không sửa biến nội bộ của chúng.
+- Gán Interaction Text; bật Collider2D trên đối tượng hoặc con của Interactable.
+- LayerMask của Player phải chứa layer collider. Với trigger, bật Physics2D Queries Hit Triggers.
+- Gốc Interactable phải ở gần vị trí Player tiếp cận được; bán kính hiện tại là 1.5. InteractionPoint chỉ đánh dấu hiệu ứng/biểu tượng.
+- Gán `PlayerInteraction.Interaction Hint` vào `Canvas/HUD/InteractionHint` của scene.
 
-Cows/Production tự áp dụng chỉ số theo cấp: tính từ giá trị gốc, không cộng/nhân tiếp giá trị hiện tại. ApplyLevel là đặt cấp tuyệt đối; gọi cấp 2 hai lần vẫn là chỉ số cấp 2, không dùng currentLevel++.
+Khi thay script đơn hàng, gán lại OnClick của DeliverButton vào phương thức giao hàng mới.
 
-UpgradeTargetSample chỉ lưu CurrentLevel và Debug.Log, mặc định 1; đặt 2 hai lần vẫn 2, 0/âm bị từ chối, không có logic bò/máy.
+## 6. Xây dựng và nâng cấp
 
-Sau khi chạy menu chuẩn bị, BuildingSample cũ được thêm BuildingConnectionSample và BuildSpawnPoint nếu thiếu; điểm đã chỉnh không bị đặt lại. Nếu thành viên đã thay tương tác mẫu, menu bỏ qua phần nối mẫu và báo để gán thủ công. DummyBuilding dùng hình FarmHouse; DummyCowBarn có vùng đi con, DummyMachine có nguồn điện. Các prefab giả ở Prefabs/Features/Building có FeatureReferences/UpgradeTargetSample ở gốc; không ghi đè asset đã tồn tại.
+**Building quản lý giá, thanh toán và cấp hiện tại.** Chỉ gọi `UpgradeTarget.ApplyLevel(level)` sau khi `TryRemove(Credits, price)` thành công.
 
-BuildingConnectionSample dùng UpgradeTarget chung, không phụ thuộc lớp bò/máy. Đổi Building Prefab trong Inspector để thử prefab giả hoặc prefab thật. Khi đổi prefab thử, thoát rồi vào Play lại để tạo instance mới. Prefab thật có đúng một lớp kế thừa UpgradeTarget ở gốc; bỏ UpgradeTargetSample khi đã có lớp thật.
+Cows/Production kế thừa `UpgradeTarget`, tự tính chỉ số từ cấu hình gốc. ApplyLevel đặt cấp tuyệt đối: gọi cấp 2 hai lần vẫn cho chỉ số cấp 2. Không dùng `currentLevel++` hoặc nhân tiếp chỉ số hiện tại. Từ chối cấp < 1 và cấp ngoài bảng hỗ trợ.
 
-Trong Play, E tại BuildingSample: kiểm tra Initialize → Instantiate DummyBuilding một lần → Initialize kho BuildingTest ngay sau tạo → ApplyLevel(testLevel=2) hai lần → assert vẫn cấp 2 và Credits giữ nguyên. E lại dùng công trình đang có, không tạo thêm. Có thể chạy context menu **Test Instantiate and Upgrade (Play Mode)** trên BuildingConnectionSample.
+Prefab thật có FeatureReferences và đúng một lớp kế thừa UpgradeTarget ở gốc; bỏ UpgradeTargetSample khi có lớp thật. Building giữ tham chiếu kiểu UpgradeTarget qua Inspector, không cần biết lớp bò/máy.
 
-Đây là phép thử điểm nối, không gọi Add/TryRemove hoặc thanh toán tự động. Nâng cấp thật vẫn phải trả tiền thành công trước ApplyLevel.
+### Thử bằng prefab giả
 
-Quy ước nâng cấp đề xuất, tính từ cấu hình cấp 1:
+- `DummyBuilding`: dùng hình FarmHouse.
+- `DummyCowBarn`: có vùng đi con.
+- `DummyMachine`: có nguồn điện.
+- Cả ba nằm trong `Prefabs/Features/Building`, có FeatureReferences/UpgradeTargetSample ở gốc. Setup chỉ tạo khi thiếu.
+
+BuildingSample được bổ sung `BuildingConnectionSample` và `BuildSpawnPoint` nếu thiếu; điểm đã chỉnh giữ nguyên. Nếu đã thay tương tác mẫu, gán điểm nối thủ công theo thông báo của menu.
+
+Trong BuildingTest, nhấn E tại mẫu hoặc chạy context menu **Test Instantiate and Upgrade (Play Mode)**:
+
+1. Tạo công trình một lần và Initialize bằng kho BuildingTest.
+2. Gọi ApplyLevel(2) hai lần; CurrentLevel vẫn là 2, Credits không đổi.
+3. Nhấn E lại dùng công trình đang có, không tạo thêm.
+
+Đây là phép thử điểm nối, chưa phải mua/nâng cấp thật. Đổi Building Prefab trong Inspector rồi thoát/vào Play để thử instance mới.
+
+### Bảng nâng cấp đề xuất
 
 | Cấp | Thời gian bò/máy | Sản lượng | Feed/nguyên liệu |
 | --- | --- | --- | --- |
-| 1 | x1 | x1 | Giữ nguyên |
-| 2 | x0.8 | x1 | Giữ nguyên |
-| 3 | x0.6 | x2 | Giữ nguyên |
+| 1 | ×1 | ×1 | Giữ nguyên |
+| 2 | ×0.8 | ×1 | Giữ nguyên |
+| 3 | ×0.6 | ×2 | Giữ nguyên |
 
-Base không tự áp dụng hệ số vào bò/máy; người 2/3 triển khai và người 4 cấu hình giá/số cấp tương ứng. Lượt đang chạy giữ thời gian/nguyên liệu/sản lượng đã chốt, cấp mới áp dụng từ lượt tiếp theo. Sữa sẵn không đổi lượng khi nâng cấp. Override tự từ chối cấp ngoài bảng hỗ trợ.
+Base không tự áp dụng bảng này. Cows/Production triển khai chỉ số; Building cấu hình giá và số cấp tương ứng. Lượt đang chạy giữ thời gian/nguyên liệu/sản lượng đã chốt; cấp mới áp dụng từ lượt tiếp theo. Sữa đã sẵn không đổi lượng khi nâng cấp.
 
-### Vùng đi và nguồn điện
+## 7. Vùng đi của bò và điện của máy
 
-RoamingArea có WorldBounds, GetRandomPoint(padding), ClampPosition(position, padding), Contains(position, padding). Vùng chữ nhật theo trục world, dùng đơn vị world, không theo xoay/scale Transform. Padding tính cả kích thước và độ lệch collider bò. Gán vùng qua Inspector, kiểm tra vùng đủ chứa collider và giới hạn cả bước đi; component không tự di chuyển hoặc tránh vật cản.
+### Cows: RoamingArea
 
-Người 2 bàn giao prefab chuồng chứa bò và vùng đi đứng yên; không đặt vùng làm con của bò. Vùng trong CowTest là dữ liệu thử, cần chỉnh theo đất trống. Người 4 không cần truyền biên khi tạo prefab chuồng hoàn chỉnh.
+API: `WorldBounds`, `GetRandomPoint(padding)`, `ClampPosition(position, padding)`, `Contains(position, padding)`.
 
-Setup chỉ thêm TestRoamingArea/TestPowerSource khi FeatureWork chưa có component tương ứng, không tự gán vào script thành viên. Tâm vùng thử đặt tại CowSample nếu có. Ví dụ sử dụng trong script di chuyển:
+Vùng chữ nhật theo trục world, dùng đơn vị world, không theo xoay/scale Transform. Gán vùng qua Inspector; component không tự di chuyển hoặc tránh vật cản.
 
 ```csharp
 [SerializeField] private RoamingArea roamingArea;
-Vector2 padding = new Vector2(0.35f, 0.4f); // Thay theo collider thực.
-Vector2 destination = roamingArea.GetRandomPoint(padding);
-Vector2 safePosition = roamingArea.ClampPosition(nextPosition, padding);
-bool inside = roamingArea.Contains(safePosition, padding);
+// Ví dụ: thay theo nửa kích thước collider world và độ lệch tâm collider.
+Vector2 padding = new Vector2(0.35f, 0.4f);
+// Dùng trong phương thức di chuyển, sau khi kiểm tra roamingArea khác null:
+// Vector2 destination = roamingArea.GetRandomPoint(padding);
+// Vector2 safePosition = roamingArea.ClampPosition(nextPosition, padding);
 ```
 
-Padding gồm nửa kích thước collider world và độ lệch tâm so với gốc bò. Collider lớn hơn vùng thì Contains luôn false; Clamp/GetRandomPoint trả tâm trên trục thiếu chỗ. Kiểm tra cấu hình trước khi di chuyển.
+Giới hạn cả bước di chuyển, không chỉ điểm đến. Nếu collider lớn hơn vùng, Contains luôn false; Clamp/GetRandomPoint trả tâm trên trục thiếu chỗ. Kiểm tra cấu hình trước khi chạy.
 
-PowerSource có HasPower, SetPower(bool), OnPowerChanged. Người 3 gán nguồn điện qua Inspector, chỉ giảm thời gian xử lý khi HasPower=true; mất điện giữ tiến trình/nguyên liệu. Context menu Power Off/Power On dùng thử trong Play. Checkbox Inspector không phát sự kiện; đọc HasPower mỗi frame để hỗ trợ cách thử này. Máy thật đóng gói nguồn điện nội bộ, không cần chờ hệ thống điện khác.
+Bàn giao prefab **chuồng + vùng đi đứng yên + bò**; không đặt vùng làm con của bò. TestRoamingArea chỉ là vùng thử, cần chỉnh theo đất trống.
 
-HasPower mặc định true. SetPower chỉ phát sự kiện khi đổi giá trị; đăng ký OnEnable/bỏ đăng ký OnDisable nếu nghe sự kiện. Không trừ lại nguyên liệu khi có điện trở lại. Ví dụ trong xử lý sản xuất:
+### Production: PowerSource
+
+API: `HasPower`, `SetPower(bool)`, `OnPowerChanged`. HasPower mặc định true; SetPower chỉ phát sự kiện khi giá trị đổi.
 
 ```csharp
-[SerializeField] private PowerSource powerSource;
-// Thiếu điện thì không giảm remainingTime.
+// Trong phương thức xử lý sản xuất:
 if (powerSource == null || !powerSource.HasPower) return;
+// Chỉ giảm remainingTime khi có điện.
 ```
 
-## 7. Bàn giao và tích hợp Main
+Mất điện giữ tiến trình và nguyên liệu; có điện lại tiếp tục, không trừ nguyên liệu lần nữa. Có thể thử bằng context menu **Power Off/Power On** trong Play. Checkbox Inspector không phát sự kiện; đọc HasPower mỗi frame để hỗ trợ cách thử này. Nếu nghe sự kiện, đăng ký OnEnable và bỏ đăng ký OnDisable.
 
-Bàn giao script/prefab/scene trong thư mục riêng kèm bước thử; prefab tính năng không đóng thêm Player, kho, HUD, camera hoặc EventSystem. Commit cả .meta script/prefab/scene/asset/thư mục; không tạo .meta bằng tay, không commit Library/Temp/obj/Logs/.vs.
+Bàn giao prefab máy có PowerSource nội bộ; không cần chờ hệ thống điện khác.
 
-Người phụ trách base kéo prefab vào Main và kiểm tra:
+## 8. Bàn giao và ghép Main
 
-- Gốc có FeatureReferences, các script trỏ đúng component nội bộ.
-- Công trình bò/máy có một lớp kế thừa UpgradeTarget ở gốc. Chuồng chứa vùng đi và bò, máy chứa PowerSource; không tham chiếu sang scene thử.
-- Instance đặt sẵn có trong mảng Features; Inventory của Initializer trỏ kho Main. Menu độc lập không tự sửa Main; người phụ trách base gán bộ nối khi ghép.
-- Instance runtime được Initialize ngay sau Instantiate bằng cùng kho.
-- PlayerInteraction.Interaction Hint trỏ chữ HUD Main; không thêm Player/TeamServices thứ hai.
-- Transform đích xây/giao hàng, UpgradeTarget và layer collider gán đúng instance Main.
-- OnClick gán lại nếu đổi script mẫu; tham chiếu nội bộ prefab giữ được, tham chiếu ngoài prefab cần gán trong scene.
+Mỗi phần bàn giao gồm script, prefab, scene, `.meta` và bước thử. Prefab tính năng không chứa thêm Player, kho, HUD, camera hoặc EventSystem.
 
-Không Apply All từ scene thử, không chuyển tài nguyên giả về prefab base/Main, không ghi đè Main bằng scene thử. Main giữ tài nguyên đầu game.
+Người phụ trách base ghép prefab vào Main và kiểm tra:
 
-## 8. Checklist kiểm tra
+- [ ] FeatureReferences ở gốc; script trỏ đúng component nội bộ.
+- [ ] Chuồng/máy có đúng một lớp kế thừa UpgradeTarget; vùng đi/điện nằm trong prefab.
+- [ ] Instance đặt sẵn nằm trong mảng Features; Initializer dùng kho Main.
+- [ ] Instance runtime được Initialize ngay sau Instantiate bằng cùng kho.
+- [ ] Interaction Hint, Transform đích, UpgradeTarget, layer collider và OnClick trỏ đúng instance Main.
+- [ ] Không còn tham chiếu sang scene thử, không thêm base thứ hai.
+- [ ] Main giữ tài nguyên đầu game; không Apply All từ scene thử hoặc ghi đè Main bằng scene thử.
 
-1. Chạy menu chuẩn bị. Mỗi scene có một Player/kho/Canvas HUD/InventoryHUD/EventSystem. OrderCanvas là UI đơn hàng, không phải HUD thứ hai.
-2. HUD và Initializer cùng kho; mảng Features chứa các root đặt sẵn; ô FeatureReferences của mẫu đúng root.
-3. Play riêng từng scene: di chuyển/đổi hướng/va chạm; gần mẫu hiện gợi ý, E ghi log, xa thì ẩn; giữ E không gọi liên tục.
-4. HUD/Console: CowTest Feed=20; ProductionTest RawMilk=50; BuildingTest Credits=1000; OrderTest BottledMilk=100, Credits=100. Mẫu không tiêu thụ tài nguyên.
-5. BuildingTest: E tạo công trình, log kho đúng/cấp 2 hai lần vẫn 2/không trừ tiền; không có Assert lỗi. E lại không thêm nhà.
-6. Thoát Play, chạy setup lại: số thử không cộng dồn, số component/phần tử mảng/BuildSpawnPoint không tăng, vị trí thủ công giữ nguyên. Đóng/mở scene để kiểm tra đã lưu.
-7. Verify Independent Feature Contracts dùng scene tạm không lưu: instantiate prefab giả qua Editor API, Initialize, đặt cấp 2 hai lần, kiểm tra Credits giữ nguyên, đóng scene tạm. Đây là Verify Edit Mode, chưa xác nhận Awake/Update/Play.
-8. Kiểm tra OnChanged bằng Add/TryRemove trong tính năng. InventoryTester cũ giả định Credits=100, Feed=0, nên **không bật trong scene đã gieo tài nguyên giả**; Assert cũ sẽ sai. Không sửa kho để né giả định test này.
-9. Chạy Verify Parallel Feature Base: hợp đồng hai prefab giả, cấp lặp lại, biên vùng đi và sự kiện điện. Sau khi có gameplay thật, Play kiểm tra bò không vượt biên, máy dừng/tiếp tục khi mất/có điện.
+## 9. Checklist trước khi tạo PR
 
-FeatureReferences.Inventory null trong Edit Mode là bình thường, chỉ có giá trị sau Initialize. Audit Edit Mode kiểm tra danh sách nối; nó kiểm tra ô InventoryManager serialized trong MonoBehaviour, không suy đoán tham chiếu gán động hoặc ScriptableObject. Thiếu/trùng base phải sửa Inspector, không tự xóa/chọn bản đầu tiên.
+- [ ] Unity biên dịch xong, không có lỗi Console trong các bước thử.
+- [ ] Play riêng scene của mình: di chuyển/đổi hướng/va chạm đúng; gần hiện gợi ý, xa ẩn; giữ E không gọi liên tục.
+- [ ] HUD và tính năng cùng kho; thiếu Initialize thì không chạy gameplay cần kho.
+- [ ] Luồng thành công thay đổi kho/HUD đúng; thiếu tiền/nguyên liệu không trao kết quả.
+- [ ] Building: tạo đúng kho, cấp 2 lặp lại vẫn cấp 2; mẫu thử không trừ tiền hoặc tạo nhà lần hai.
+- [ ] Cows: không vượt biên. Production: mất/có điện giữ đúng tiến trình và nguyên liệu.
+- [ ] Prefab không phụ thuộc scene thử; đã lưu và commit đủ `.meta`.
+- [ ] PR kèm bước thử, kết quả và phần chưa xong.
 
-## 9. Quyền quản lý base
+Base kiểm tra thêm khi thay công cụ setup: chạy Prepare hai lần, số thử không cộng dồn, component/mảng/BuildSpawnPoint không tăng, vị trí thủ công giữ nguyên; đóng/mở scene để kiểm tra đã lưu.
 
-Thành viên không tự sửa: Main; InventoryManager, ItemType, InventoryTester, InventoryHUD; PlayerMovement, PlayerInteraction, Interactable, InventoryInteractionSample; UpgradeTarget, UpgradeTargetSample, FeatureReferences, FeatureReferenceInitializer, WorldDepthSorting; công cụ Editor; prefab Shared/World; Art/import settings, ProjectSettings/Packages và tài liệu base. Cần đổi API thì trao đổi người phụ trách base trước.
+## 10. Gỡ lỗi nhanh
 
-Mỗi người sửa code/prefab/scene tính năng của mình. Building có thể thay BuildingConnectionSample bằng logic thật, giữ Initialize/ApplyLevel, không sửa Core (gồm cả RoamingArea/PowerSource) hoặc công cụ Editor mới. Giữ prefab giả làm mẫu đối chiếu, tạo prefab thật riêng.
-
-Base chuẩn bị scene/prefab/.meta dùng chung một lần rồi bàn giao cho nhóm, tránh từng người sửa cả bốn scene do menu reset. Hai giai đoạn đều làm song song:
-
-| Người | Giai đoạn 1 | Giai đoạn 2 |
-| --- | --- | --- |
-| 2 | Di chuyển với RoamingArea, Feed → RawMilk bằng kho thử | UI, nâng cấp, chống vượt biên/kẹt, prefab chuồng |
-| 3 | RawMilk → BottledMilk, khóa lượt, đọc PowerSource | UI, nâng cấp, mất/có điện, prefab máy |
-| 4 | Slot, giá, thanh toán, xây bằng prefab giả | UI nâng cấp, chống xây chồng, thử UpgradeTargetSample |
-| 5 | Đơn, giao hàng, thưởng Credits, mua Feed | Drone, UI, đủ 5 đơn, kiểm tra thiếu hàng/tiền |
-
-Base nhận prefab để ghép Main; người 4 không cần đợi prefab thật để lập trình/kiểm thử riêng, chỉ thay prefab qua Inspector khi tích hợp. Kiểm thử vòng chơi chung cần đủ sản phẩm.
-
-## 10. Giới hạn kiểm chứng lần cập nhật này
-
-Đã build runtime và Editor bằng MSBuild thành công, có cảnh báo tham chiếu framework/assembly và API cũ của dự án. Prefab giả/.meta, vùng đi/điện và tài nguyên thử đã có trên đĩa; log Editor ghi Audit 5/5. Verify Parallel Feature Base trước đó lỗi kiểm tra vị trí sát biên sau khi dịch chuyển vùng do sai số float trong Contains. Bản sửa so sánh lại hai đầu biên vẫn chưa qua Verify trong Unity. Đã sửa Contains kiểm tra trực tiếp tọa độ float trả về từ ClampPosition và mở rộng Verify cả bốn góc cùng điểm ngoài vùng; build lại thành công, cần chạy lại Verify để xác nhận trong Unity. Chưa xác nhận Play toàn bộ base hoặc gameplay tính năng.
-
-Build/Audit cũ 5/5 không thay cho kiểm tra Initialize runtime, setup hai lần không cộng dồn và ApplyLevel lặp lại. Các mẫu chưa triển khai chăm bò, sản xuất, mua thức ăn, mua công trình hoặc giao hàng.
+| Hiện tượng | Kiểm tra |
+| --- | --- |
+| Kho null khi Play | Inventory và mảng Features của Initializer; runtime đã Initialize chưa |
+| Không hiện E | Collider, LayerMask, khoảng cách gốc, trigger queries, Interaction Hint |
+| Nút không chạy | OnClick còn trỏ component mẫu đã tháo không |
+| HUD không đổi | Tính năng có dùng API và cùng kho với HUD không |
+| Assert của InventoryTester sai | Tester cũ giả định Credits=100, Feed=0; không bật trong scene dùng tài nguyên thử |
+| Scene thiếu/trùng base | Sửa Inspector, nhờ base kiểm tra; không tự xóa/chọn bản đầu tiên |

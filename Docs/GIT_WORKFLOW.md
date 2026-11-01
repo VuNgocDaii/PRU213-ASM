@@ -1,89 +1,152 @@
-# PolishCow — workflow Git cho nhóm
+﻿# PolishCow — quy trình Git cho team
 
-## 1. Quy ước
+Mỗi người làm trên nhánh riêng, mở PR vào `main`; người phụ trách base review và merge. Xem [phân công và hợp đồng kỹ thuật](TEAM_GUIDE.md) trước khi sửa code chung.
 
-Các lệnh dưới giả định repo có remote `origin`, nhánh chung `main`. Thay tên nếu nhóm dùng quy ước khác. Workspace hiện có metadata Plastic SCM; hướng dẫn này áp dụng khi làm trên repo Git của nhóm, không tự chuyển hệ quản lý phiên bản.
+## 1. Chọn đúng nhánh
 
 | Phần việc | Nhánh gợi ý | Scene được sửa |
 | --- | --- | --- |
 | Base/tích hợp | `base/integration` | Main |
-| Bò | `feature/cows` | CowTest |
-| Máy | `feature/production` | ProductionTest |
-| Xây dựng/nâng cấp | `feature/building-upgrades` | BuildingTest |
-| Đơn hàng + mua Feed | `feature/orders` | OrderTest |
+| Cows | `feature/cows` | CowTest |
+| Production | `feature/production` | ProductionTest |
+| Building | `feature/building-upgrades` | BuildingTest |
+| Orders/mua Feed | `feature/orders` | OrderTest |
 
-Mỗi người làm trên nhánh riêng, không push trực tiếp vào main. Người phụ trách base review và merge PR. Không tự sửa scene người khác, Main, API kho/tương tác/Core hoặc prefab base.
+Các lệnh dưới chạy trong **Terminal của VS Code hoặc PowerShell tại thư mục gốc project** — nơi có Assets, Packages, ProjectSettings. Ví dụ dùng `feature/cows`; thay bằng nhánh của mình.
 
-Base đưa API/công cụ chuẩn bị lên nhánh chung một lần; nhóm lấy cùng phiên bản. Sau đó bốn người làm song song theo [TEAM_GUIDE.md](TEAM_GUIDE.md), dùng tài nguyên thử và prefab giả, không cần merge code của người khác để tiếp tục phần mình.
+Repo dùng `origin` và `main`. Workspace còn metadata Plastic SCM; các bước này dành cho Git, không phải thao tác chuyển hệ quản lý phiên bản.
 
-## 2. Bắt đầu tính năng
+## 2. Lần đầu nhận project
 
-Clone repo nhóm nếu chưa có. Khi working tree sạch:
+Nếu chưa có repo, clone rồi mở thư mục:
 
-```bash
+```powershell
+git clone https://github.com/VuNgocDaii/PRU213-ASM.git
+cd PRU213-ASM
+```
+
+Nếu đã có repo, mở terminal tại thư mục hiện tại, không clone lồng vào project.
+
+Kiểm tra `git status`; chỉ chuyển nhánh khi đã lưu/commit công việc và working tree sạch:
+
+```powershell
 git switch main
 git pull --ff-only origin main
 git switch -c feature/cows
 ```
 
-Thay nhánh Cows bằng phần việc của mình. Lệnh `switch -c` chỉ dùng lúc tạo nhánh lần đầu; nếu đã có thì dùng `git switch feature/cows`.
+`switch -c` chỉ dùng để tạo nhánh lần đầu. Nếu nhánh đã có trên máy, dùng `git switch feature/cows`. Nếu chỉ có trên GitHub:
 
-Mở Unity, đợi import/biên dịch, mở scene thử của mình. Code trong Scripts/Features và prefab trong Prefabs/Features tương ứng. Không chạy lại menu reset tài nguyên giữa lúc đang kiểm tra trạng thái gameplay cần giữ.
+```powershell
+git fetch origin
+git switch --track origin/feature/cows
+```
 
-Base chạy Prepare Parallel Feature Base, Audit Team Workspace và hai menu Verify để chuẩn bị scene/asset dùng chung; commit asset/.meta do Unity tạo rồi nhóm lấy cập nhật. Không để từng người commit lại cả bốn scene do menu reset. Hai prefab giả chuồng/máy được tạo bằng Editor API, không viết YAML/.meta bằng tay. Hiện asset/.meta và tài nguyên thử đã có, log Editor ghi Audit 5/5; code đã build. Cần chạy lại Verify sau sửa lỗi biên RoamingArea và Play trước khi ghi kết quả đạt trong PR.
+Mở project bằng Unity 6000.6.2f1, đợi import/biên dịch, mở scene thử của mình. Base chuẩn bị scene và prefab dùng chung một lần; thành viên không chạy setup rồi commit lại cả bốn scene.
 
-## 3. Mỗi lần hoàn thành một phần nhỏ
+## 3. Lưu một phần việc và push
 
-1. Play thử, kiểm tra Console, tương tác, kho và HUD.
-2. Thoát Play, lưu scene/prefab. Chờ Unity tạo đủ file .meta.
-3. Xem thay đổi trước khi stage:
+1. Play thử tính năng, kiểm tra Console, tương tác, kho và HUD.
+2. Thoát Play, lưu scene/prefab, chờ Unity tạo đủ `.meta`.
+3. Xem thay đổi:
 
-```bash
+```powershell
 git status
 git diff
 ```
 
-4. Chỉ stage file thuộc phần việc của mình cùng .meta tương ứng; có thể chọn từng file trong giao diện Git. Tránh `git add .` nếu còn thay đổi ngoài phạm vi.
-5. Kiểm tra nội dung đã stage, commit và push:
+4. Stage đúng script/prefab/scene thuộc phần mình cùng `.meta`. Có thể chọn từng file trong giao diện Source Control của VS Code. Ví dụ chỉ stage code và prefab Cows:
 
-```bash
+```powershell
+git add -- Assets/_Game/Scripts/Features/Cows Assets/_Game/Prefabs/Features/Cows
+```
+
+Nếu tạo thư mục mới, stage thêm file `.meta` bên cạnh thư mục đó. Nếu sửa scene, stage scene cùng `.meta` tương ứng. Kiểm tra để không bỏ sót hoặc gom thay đổi của người khác; tránh `git add .` khi còn thay đổi ngoài phạm vi.
+
+5. Xem nội dung đã stage rồi commit/push:
+
+```powershell
 git diff --cached
 git commit -m "feat(cows): add feeding interaction"
 git push -u origin feature/cows
 ```
 
-Commit sau có thể dùng `git push`. Mỗi commit nên hoàn thành một việc rõ ràng, không gom thay đổi base hoặc asset không liên quan.
+Các lần sau dùng `git push`. Mỗi commit hoàn thành một việc rõ ràng.
 
-## 4. Lấy cập nhật từ nhóm
+## 4. Lấy cập nhật từ main
 
-Lưu và commit công việc trước, bảo đảm working tree sạch. Đóng Unity trước khi merge thay đổi scene/prefab:
+Lưu và commit công việc; bảo đảm working tree sạch. Đóng Unity trước khi merge thay đổi scene/prefab.
 
-```bash
+```powershell
 git fetch origin
 git switch feature/cows
 git merge origin/main
 ```
 
-Mở lại Unity, đợi import rồi Play lại scene của mình. Nếu nhánh đã push, push tiếp sau khi merge và kiểm tra xong. Không force-push để ghi đè lịch sử của người khác.
+Mở Unity, đợi import/biên dịch và Play lại scene. Khi kiểm tra xong, `git push` nếu nhánh đã có trên GitHub. Không force-push để ghi đè lịch sử người khác.
 
-## 5. PR và xử lý conflict
+Nếu `pull --ff-only` hoặc merge báo lịch sử lệch/conflict, kiểm tra nguyên nhân trước khi tiếp tục; không dùng reset để bỏ thay đổi chưa xem xét.
 
-Mở Pull Request từ nhánh tính năng vào nhánh chung. Mô tả ngắn: tính năng làm được gì, scene/prefab nào để thử, bước thử, các ô Inspector cần gán khi ghép Main và phần chưa xong.
+## 5. Tạo PR để bàn giao
 
-Prefab Cows/Production có FeatureReferences và một lớp kế thừa UpgradeTarget ở gốc; bỏ UpgradeTargetSample khi có lớp thật. Chuồng chứa vùng đi và bò, máy chứa PowerSource nội bộ. Building chỉ dùng API chung/prefab giả; lúc ghép Main, base gán prefab thật qua Inspector. Bàn giao script/prefab/scene và .meta tương ứng. Phân biệt kết quả chỉ build, Verify Edit Mode và Play; không ghi đã tạo prefab hoặc Play đạt khi chưa thực hiện.
+Mở Pull Request từ nhánh tính năng vào `main`. Dùng mẫu sau trong mô tả:
 
-- Conflict code: đọc cả hai thay đổi, trao đổi người liên quan và sửa; không chọn toàn bộ một phía khi chưa hiểu.
-- Conflict scene/prefab/.meta: phối hợp người phụ trách base, không sửa YAML hoặc tạo GUID bằng tay. Giữ bản đã thống nhất rồi dựng lại phần cần thiết bằng Unity Editor.
-- Nếu chưa biết cách giải quyết, có thể `git merge --abort` để quay lại trước lần merge, sau đó thống nhất với nhóm.
-- Sau merge, kiểm tra Unity compile, Audit và Play; người phụ trách base ghép prefab vào Main và gán các tham chiếu scene/Initialize.
+```text
+Đã làm:
+- Hành vi/tính năng đã hoàn thành.
 
-## 6. Lưu ý khi làm
+Cách thử:
+- Scene, vị trí đối tượng, thao tác và kết quả mong đợi.
 
-- Commit Assets, Packages, ProjectSettings và tài liệu cần thiết; luôn đi kèm .meta của asset/script/prefab/scene/thư mục mới.
-- Di chuyển/đổi tên asset trong Unity để giữ GUID; không xóa hoặc sinh lại .meta tùy tiện.
-- Người phụ trách base chuẩn bị `.gitignore` cho Unity: bỏ Library, Temp, obj, Logs, UserSettings, .vs, bản build và file IDE sinh tự động. `ignore.conf` của Plastic không thay thế `.gitignore`.
-- Không commit mật khẩu, token hoặc cấu hình cá nhân.
-- Không Apply tài nguyên giả của scene thử vào prefab kho chung; không ghi đè Main bằng scene thử.
-- Trước khi sửa file base/API dùng chung, trao đổi người phụ trách base để tránh cả nhóm lệch hợp đồng.
+Khi ghép Main:
+- Prefab cần dùng, các ô Inspector/OnClick cần gán.
 
-Cấu trúc code/asset: [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md). Hướng dẫn kỹ thuật và chia việc song song: [TEAM_GUIDE.md](TEAM_GUIDE.md).
+Đã kiểm tra:
+- Build / Audit / Verify Edit Mode / Play: ghi rõ phần thực sự đã chạy.
+
+Còn thiếu:
+- Phần chưa xong hoặc cần người khác phối hợp.
+```
+
+Trước khi gửi:
+
+- [ ] Chỉ có file thuộc phần việc và `.meta` tương ứng.
+- [ ] Prefab không chứa thêm Player/kho/HUD/camera/EventSystem hoặc tham chiếu scene thử.
+- [ ] Prefab chuồng/máy có FeatureReferences và một lớp kế thừa UpgradeTarget ở gốc; bỏ UpgradeTargetSample khi có lớp thật.
+- [ ] Chuồng đóng gói vùng đi + bò; máy đóng gói PowerSource.
+- [ ] Thực hiện checklist kỹ thuật trong TEAM_GUIDE; không ghi Play đạt khi mới chạy build/Verify.
+
+Người phụ trách base ghép prefab thật vào Main, gán tham chiếu scene và Initialize. Building có thể tiếp tục thử độc lập với prefab giả trước khi tích hợp.
+
+## 6. Khi có conflict
+
+| Loại file | Cách xử lý |
+| --- | --- |
+| Code | Đọc cả hai thay đổi, trao đổi người liên quan rồi sửa; không chọn cả một phía khi chưa hiểu |
+| Scene/prefab/.meta | Phối hợp base để giữ bản thống nhất, dựng lại phần cần thiết bằng Unity Editor; không viết YAML/GUID bằng tay |
+
+Nếu cần hủy lần merge đang có conflict:
+
+```powershell
+git merge --abort
+```
+
+Sau khi giải quyết, xem `git status`, stage file đã sửa, hoàn tất merge commit, rồi kiểm tra Unity compile, Audit và Play trước khi push.
+
+## 7. File nào cần commit?
+
+| Commit | Không commit |
+| --- | --- |
+| Assets và `.meta` của asset/script/prefab/scene/thư mục | Library, Temp, obj, Logs, UserSettings, .vs |
+| Packages, ProjectSettings | Bản build, file IDE sinh tự động |
+| Docs, README, Tools, cấu hình nhóm cần dùng | Mật khẩu, token, cấu hình cá nhân |
+
+Di chuyển/đổi tên asset trong Unity để giữ GUID. Không xóa hoặc sinh lại `.meta` tùy tiện. `.gitignore` quản lý file bỏ qua của Git; `ignore.conf` thuộc Plastic không thay thế nó.
+
+Không Apply tài nguyên giả về prefab kho chung, không ghi đè Main bằng scene thử. Muốn đổi API/base, thống nhất với người phụ trách trước.
+
+## 8. Script Publish-PolishCow dùng khi nào?
+
+`Tools/Publish-PolishCow.ps1` dành cho bước publish base trên `main` của người phụ trách. Script stage nhiều thư mục, tạo commit nếu có thay đổi và push thẳng `main`; workflow tính năng hằng ngày dùng nhánh riêng và PR như trên.
+
+Tra đường dẫn code/asset tại [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md).
