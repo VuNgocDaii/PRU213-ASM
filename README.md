@@ -36,13 +36,3 @@ Code runtime/Editor đã build bằng MSBuild; log Unity ghi Audit 5/5 scene và
 - [Quy trình Git và bàn giao](Docs/GIT_WORKFLOW.md)
 
 Commit `Assets` cùng `.meta`, `Packages`, `ProjectSettings`, `Docs`, README và cấu hình nhóm cần dùng. `.gitignore` loại cache Unity, build, log, cấu hình cá nhân và file IDE sinh tự động; Unity sẽ tạo lại dữ liệu cần thiết khi mở project.
-
-## Xuất bản bản base
-
-Script `Tools/Publish-PolishCow.ps1` dành cho người phụ trách base chạy trong PowerShell có quyền ghi Git và truy cập GitHub:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Publish-PolishCow.ps1
-```
-
-Script kiểm tra nhánh main/origin, lịch sử từ xa, file lớn và mẫu thông tin bí mật trong index trước khi commit/push; không force-push hoặc đổi remote. Nếu remote có lịch sử trong khi local chưa có commit, script dừng để xử lý lịch sử an toàn. Nếu cần xác thực, đăng nhập qua cửa sổ Git Credential Manager do Git mở; không dán token vào chat hoặc URL. `ExecutionPolicy Bypass` chỉ áp dụng tiến trình chạy lệnh, không đổi thiết lập hệ thống.
