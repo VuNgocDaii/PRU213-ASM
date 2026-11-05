@@ -17,6 +17,7 @@ public class OrderUI : MonoBehaviour
     [SerializeField] private GameObject demoCompletePanel;       // Panel hoàn thành demo 5 đơn
 
     private Coroutine notificationCoroutine;
+    private InventoryManager subscribedInventory;
 
     private void OnEnable()
     {
@@ -32,17 +33,30 @@ public class OrderUI : MonoBehaviour
             deliverButton.onClick.AddListener(OnDeliverButtonClicked);
         }
 
-        if (featureReferences != null && featureReferences.Inventory != null)
-        {
-            featureReferences.Inventory.OnChanged += RefreshUI;
-        }
+        SubscribeInventory();
 
         if (demoCompletePanel != null)
         {
-            demoCompletePanel.SetActive(false);
+            demoCompletePanel.SetActive(orderController != null && orderController.IsCompletedAll);
         }
 
         RefreshUI();
+    }
+
+    private void Start()
+    {
+        // Scene initializers finish Awake before Start, but may run after this OnEnable.
+        SubscribeInventory();
+        RefreshUI();
+    }
+
+    private void SubscribeInventory()
+    {
+        InventoryManager inventory = featureReferences != null ? featureReferences.Inventory : null;
+        if (inventory == subscribedInventory) return;
+        if (subscribedInventory != null) subscribedInventory.OnChanged -= RefreshUI;
+        subscribedInventory = inventory;
+        if (subscribedInventory != null) subscribedInventory.OnChanged += RefreshUI;
     }
 
     private void OnDisable()
@@ -59,9 +73,10 @@ public class OrderUI : MonoBehaviour
             deliverButton.onClick.RemoveListener(OnDeliverButtonClicked);
         }
 
-        if (featureReferences != null && featureReferences.Inventory != null)
+        if (subscribedInventory != null)
         {
-            featureReferences.Inventory.OnChanged -= RefreshUI;
+            subscribedInventory.OnChanged -= RefreshUI;
+            subscribedInventory = null;
         }
     }
 

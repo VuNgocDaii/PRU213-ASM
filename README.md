@@ -19,11 +19,15 @@ Repository: [VuNgocDaii/PRU213-ASM](https://github.com/VuNgocDaii/PRU213-ASM). G
 4. Mở `Assets/_Game/Scenes/Main.unity`, nhấn **Play**. Di chuyển bằng WASD/phím mũi tên, đến gần đối tượng rồi nhấn **E**.
 5. Thử từng phần trong `Assets/_Game/Scenes/Tests/`: `CowTest`, `ProductionTest`, `BuildingTest`, `OrderTest`. Mỗi lần chỉ Play một scene thử.
 
-Build Settings hiện còn trỏ tới `Assets/Scenes/SampleScene.unity`. Khi xuất bản demo, người tích hợp cần chọn `Assets/_Game/Scenes/Main.unity` làm scene khởi động và kiểm thử bản build.
+Build Settings đã đặt `Assets/_Game/Scenes/Main.unity` làm scene khởi động. Cần kiểm thử bản build trước khi bàn giao demo.
 
 ## Base hiện tại
 
-Đã có Player, kho/HUD, tương tác E, các prefab/scene mẫu, API Initialize/ApplyLevel, vùng đi RoamingArea và nguồn điện PowerSource. Prefab giả chuồng/máy giúp người xây dựng làm độc lập với người bò/máy. Các tính năng chăm bò, sản xuất, mua/nâng cấp và đơn hàng cần được thành viên triển khai; bản base chưa phải demo hoàn chỉnh.
+Đã có Player, kho/HUD, tương tác E, API Initialize/ApplyLevel, vùng đi RoamingArea và nguồn điện PowerSource. Main tích hợp bò ở khu chuồng bên trái, máy đóng chai ở Production, FeedShop tại (4, -1), và trạm giao hàng/drone tại (7, -4). Các tính năng cùng dùng kho của GameSystems qua FeatureReferenceInitializer. Main bắt đầu với 100 Credits và 10 Feed; RawMilk/BottledMilk bằng 0. Mua/xây dựng công trình và giao diện nâng cấp chưa hoàn chỉnh.
+
+Thử trong Main: đến FeedShop, nhấn E mua 5 Feed với 10 Credits. Đến gần bò, E dùng 1 Feed; chờ 10 giây rồi E thu 1 RawMilk. Lặp lại để có 2 RawMilk, đến máy ở Production, E bắt đầu đóng chai; chờ 5 giây rồi E nhận 1 BottledMilk. Khi đủ số chai trong bảng đơn hàng, đến trạm nhấn E hoặc bấm nút giao hàng; drone hoàn tất chuyến giao và chuyển đơn tiếp theo. Hoàn thành 5 đơn để kết thúc demo.
+
+Chạy kiểm tra tự động trong Unity: mở Main ở Edit Mode, chọn **Tools → PolishCow → Run Main Gameplay Smoke Test**. Bài thử chạy gameplay tăng tốc, kiểm tra kho/HUD, mất điện, giao hàng và màn hoàn thành; tài nguyên bổ sung để thử 5 đơn chỉ tồn tại trong Play Mode. Kết quả ghi ở `Logs/MainGameplaySmokeTest.txt`, ảnh đầu/cuối ở `output/main-gameplay-start.png` và `output/main-gameplay-complete.png`. Menu **Integrate Orders Into Main** dùng để gắn lại prefab và tham chiếu khi cần; hãy lưu scene trước khi chạy menu tích hợp.
 
 Code runtime/Editor đã build bằng MSBuild; log Unity ghi Audit 5/5 scene và `PASS Parallel Feature Base` sau khi sửa lỗi sai số float ở biên vùng đi. Đây là kiểm tra Edit Mode, chưa xác nhận Play toàn bộ vòng chơi.
 

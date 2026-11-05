@@ -434,7 +434,7 @@ MonoBehaviour:
   - 1
   - 0.8
   - 0.6
-  amountMultipliers: 010000000100000002000000i
+  amountMultipliers: 010000000100000002000000
 --- !u!1 &1783879911827979629
 GameObject:
   m_ObjectHideFlags: 0
