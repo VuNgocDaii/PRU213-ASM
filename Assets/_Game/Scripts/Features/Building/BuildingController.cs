@@ -10,6 +10,8 @@ public class BuildingController : MonoBehaviour
     [SerializeField] private GameObject buildingPrefab;
     [SerializeField] private Transform spawnPoint;
     [SerializeField, Min(1)] private int buildPrice;
+    [SerializeField] private GameObject existingBuilding;
+    [SerializeField, Range(1, 3)] private int existingLevel = 1;
 
     private GameObject instance;
     private bool busy;
@@ -22,13 +24,14 @@ public class BuildingController : MonoBehaviour
     public GameObject Instance => instance;
     public bool IsOccupied => instance != null;
     public bool IsBusy => busy;
+    public int CurrentLevel { get; private set; }
     public string LastError { get; private set; }
 
     public bool CanBuild(out string reason)
     {
         reason = null;
         if (busy) reason = "Đang xử lý";
-        else if (IsOccupied) reason = "Vị trí đã có công trình";
+        else if (IsOccupied || existingBuilding != null) reason = "Vị trí đã có công trình";
         else if (Inventory == null) reason = "Chưa Initialize kho";
         else if (spawnPoint == null || buildPrice <= 0) reason = "Thiếu điểm đặt hoặc giá xây không hợp lệ";
         else if (!ValidRoot(buildingPrefab)) reason = "Prefab cần FeatureReferences và đúng một UpgradeTarget ở gốc";
@@ -87,6 +90,7 @@ public class BuildingController : MonoBehaviour
             InitializeBuilding(pending, inventory);
             pending.GetComponent<UpgradeTarget>().ApplyLevel(1);
             instance = pending;
+            CurrentLevel = 1;
             return true;
         }
         catch (Exception exception)
@@ -102,6 +106,40 @@ public class BuildingController : MonoBehaviour
         }
         finally { EndTransaction(); }
     }
+
+    private void Start()
+    {
+        // All scene initializers have run Awake before this. Never use inventory in Awake/OnEnable.
+        if (existingBuilding != null) RegisterExistingBuilding();
+    }
+
+    public bool RegisterExistingBuilding()
+    {
+        if (!Application.isPlaying || busy || IsOccupied) return false;
+        if (Inventory == null || !ValidRoot(existingBuilding) || existingLevel < 1 || existingLevel > 3 ||
+            existingBuilding.transform.IsChildOf(transform) ||
+            existingBuilding.GetComponent<FeatureReferences>().Inventory != Inventory)
+        {
+            ReportError("Công trình đặt sẵn không hợp lệ; đăng ký Features cùng kho và đặt ngoài slot");
+            return false;
+        }
+        busy = true;
+        try
+        {
+            existingBuilding.GetComponent<UpgradeTarget>().ApplyLevel(existingLevel);
+            instance = existingBuilding;
+            CurrentLevel = existingLevel;
+            return true;
+        }
+        catch (Exception exception)
+        {
+            ReportError("Không thể nhận công trình đặt sẵn: " + exception.Message);
+            return false;
+        }
+        finally { EndTransaction(); }
+    }
+
+    internal void SetLevel(int level) { CurrentLevel = level; }
 
     // Virtual seam lets the Play test inject a failure AFTER payment without changing Core.
     protected virtual void InitializeBuilding(GameObject building, InventoryManager inventory)
