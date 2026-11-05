@@ -3737,10 +3737,26 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 21656315617250567, guid: ac88b6e64929d0749af0cc6caf0d847c, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2697549171361728294, guid: ac88b6e64929d0749af0cc6caf0d847c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 593248879}
+    - targetCorrespondingSourceObject: {fileID: 2697549171361728294, guid: ac88b6e64929d0749af0cc6caf0d847c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 593248878}
+    - targetCorrespondingSourceObject: {fileID: 2697549171361728294, guid: ac88b6e64929d0749af0cc6caf0d847c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 593248877}
+    - targetCorrespondingSourceObject: {fileID: 2697549171361728294, guid: ac88b6e64929d0749af0cc6caf0d847c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 593248876}
+    - targetCorrespondingSourceObject: {fileID: 2697549171361728294, guid: ac88b6e64929d0749af0cc6caf0d847c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 593248875}
   m_SourcePrefab: {fileID: 100100000, guid: ac88b6e64929d0749af0cc6caf0d847c, type: 3}
 --- !u!4 &593248871 stripped
 Transform:
@@ -3752,12 +3768,117 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2728756567709857275, guid: ac88b6e64929d0749af0cc6caf0d847c, type: 3}
   m_PrefabInstance: {fileID: 593248870}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 593248873}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a8116962444e2844aaaa639ab7c1757, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FeatureReferences
+--- !u!1 &593248873 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2697549171361728294, guid: ac88b6e64929d0749af0cc6caf0d847c, type: 3}
+  m_PrefabInstance: {fileID: 593248870}
+  m_PrefabAsset: {fileID: 0}
+--- !u!212 &593248874 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 6486137888153606938, guid: ac88b6e64929d0749af0cc6caf0d847c, type: 3}
+  m_PrefabInstance: {fileID: 593248870}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &593248875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 593248873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2df0458c04340c9a8fc75f92a32fee0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CowInteraction
+  interactionText: "T\u01B0\u01A1ng t\xE1c"
+  cowController: {fileID: 593248876}
+--- !u!114 &593248876
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 593248873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2ee1808c290415da2cc097dfd74f6e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CowController
+  featureReferences: {fileID: 593248872}
+  cowUpgrade: {fileID: 593248878}
+  currentState: 0
+  remainingTime: 0
+  lockedDuration: 0
+  lockedYield: 1
+--- !u!114 &593248877
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 593248873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41ab8cda98c94cb5ba12a9cc97bb9073, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CowMovement
+  roamingArea: {fileID: 308988384}
+  cowRigidbody: {fileID: 593248879}
+  cowSpriteRenderer: {fileID: 593248874}
+  moveSpeed: 1
+  padding: {x: 0.35, y: 0.4}
+  minWaitTime: 2
+  maxWaitTime: 5
+  reachThreshold: 0.05
+--- !u!114 &593248878
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 593248873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b45a1cce321c4c37ac3d2a9b3b4aa89c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CowUpgrade
+  currentLevel: 1
+  baseDuration: 10
+  baseYield: 1
+  feedCost: 1
+--- !u!50 &593248879
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 593248873}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 4
 --- !u!1 &608222770
 GameObject:
   m_ObjectHideFlags: 0
