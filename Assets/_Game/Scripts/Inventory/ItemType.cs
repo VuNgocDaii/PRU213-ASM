@@ -3,5 +3,7 @@ public enum ItemType
     Credits,
     Feed,
     RawMilk,
-    BottledMilk
+    BottledMilk,
+    Medicine,
+    SpoiledMilk
 }

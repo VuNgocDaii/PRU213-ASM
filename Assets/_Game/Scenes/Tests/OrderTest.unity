@@ -828,6 +828,10 @@ PrefabInstance:
       propertyPath: m_AdditionalShaderChannelsFlag
       value: 25
       objectReference: {fileID: 0}
+    - target: {fileID: 2979110129551197767, guid: 5412d029ccc6ea749b3e5a0a81921fa3, type: 3}
+      propertyPath: m_SortingOrder
+      value: 1350
+      objectReference: {fileID: 0}
     - target: {fileID: 3677837084814539698, guid: 5412d029ccc6ea749b3e5a0a81921fa3, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1
@@ -1226,7 +1230,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &252917150
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2335,7 +2339,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &377393044
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3948,7 +3952,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 630552220}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -8307,7 +8311,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 780385123}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -11896,6 +11900,8 @@ MonoBehaviour:
   feed: 0
   rawMilk: 0
   bottledMilk: 100
+  medicine: 0
+  spoiledMilk: 0
 --- !u!114 &1425582067
 MonoBehaviour:
   m_ObjectHideFlags: 0

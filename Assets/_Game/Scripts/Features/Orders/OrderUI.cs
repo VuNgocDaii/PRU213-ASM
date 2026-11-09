@@ -95,7 +95,9 @@ public class OrderUI : MonoBehaviour
         // Cập nhật tiến độ đơn
         if (orderProgressText != null)
         {
-            orderProgressText.text = $"Tiến độ: {orderController.CompletedOrdersCount}/{orderController.TargetOrderCount} đơn";
+            orderProgressText.text = orderController.HasOrderLimit
+                ? $"Tiến độ: {orderController.CompletedOrdersCount}/{orderController.TargetOrderCount} đơn"
+                : $"Đã giao: {orderController.CompletedOrdersCount} đơn";
         }
 
         // Cập nhật chi tiết đơn hiện tại

@@ -7,6 +7,8 @@ public class InventoryManager : MonoBehaviour
     [SerializeField, Min(0)] private int feed = 0;
     [SerializeField, Min(0)] private int rawMilk = 0;
     [SerializeField, Min(0)] private int bottledMilk = 0;
+    [SerializeField, Min(0)] private int medicine = 0;
+    [SerializeField, Min(0)] private int spoiledMilk = 0;
 
     // Các tính năng khác có thể đăng ký để cập nhật giao diện.
     public event Action OnChanged;
@@ -23,6 +25,10 @@ public class InventoryManager : MonoBehaviour
                 return rawMilk;
             case ItemType.BottledMilk:
                 return bottledMilk;
+            case ItemType.Medicine:
+                return medicine;
+            case ItemType.SpoiledMilk:
+                return spoiledMilk;
             default:
                 return 0;
         }
@@ -55,6 +61,12 @@ public class InventoryManager : MonoBehaviour
                 break;
             case ItemType.BottledMilk:
                 bottledMilk += amount;
+                break;
+            case ItemType.Medicine:
+                medicine += amount;
+                break;
+            case ItemType.SpoiledMilk:
+                spoiledMilk += amount;
                 break;
             default:
                 return;
@@ -94,6 +106,12 @@ public class InventoryManager : MonoBehaviour
             case ItemType.BottledMilk:
                 bottledMilk -= amount;
                 break;
+            case ItemType.Medicine:
+                medicine -= amount;
+                break;
+            case ItemType.SpoiledMilk:
+                spoiledMilk -= amount;
+                break;
             default:
                 return false;
         }
@@ -113,5 +131,7 @@ public class InventoryManager : MonoBehaviour
         feed = Mathf.Max(0, feed);
         rawMilk = Mathf.Max(0, rawMilk);
         bottledMilk = Mathf.Max(0, bottledMilk);
+        medicine = Mathf.Max(0, medicine);
+        spoiledMilk = Mathf.Max(0, spoiledMilk);
     }
 }

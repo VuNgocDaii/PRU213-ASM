@@ -74,3 +74,6 @@ service-account*.json
 *.mobileprovision
 
 # Unity asset/import settings and .meta files are tracked by default.
+
+# Local pre-migration scene snapshots.
+/output/backups/

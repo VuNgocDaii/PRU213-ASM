@@ -52,6 +52,7 @@ public static class PolishCowMainGameplaySetup
             catch (Exception exception) { Fail(exception); }
         }
         if (smokeTest == null) return;
+        EditorApplication.QueuePlayerLoopUpdate();
         try
         {
             if (EditorApplication.timeSinceStartup > deadline) throw new Exception("Gameplay smoke test timed out.");
@@ -248,6 +249,7 @@ public static class PolishCowMainGameplaySetup
 
     private static IEnumerator RunGameplay()
     {
+        Application.runInBackground = true;
         yield return null; // Allow all Start methods and UI subscriptions to complete.
         Scene scene = SceneManager.GetActiveScene();
         Require(scene.path == MainPath, "Main entered Play Mode");
@@ -258,6 +260,10 @@ public static class PolishCowMainGameplaySetup
         var machine = PolishCowWorkspaceAudit.Collect<ProductionMachine>(scene)[0];
         var shop = PolishCowWorkspaceAudit.Collect<FeedShop>(scene)[0];
         var orders = PolishCowWorkspaceAudit.Collect<OrderController>(scene)[0];
+        // Exercise the legacy demo contract without changing Main's unlimited-order setting.
+        var orderTestData = new SerializedObject(orders);
+        orderTestData.FindProperty("limitDemoOrders").boolValue = true;
+        orderTestData.ApplyModifiedPropertiesWithoutUndo();
         var ui = PolishCowWorkspaceAudit.Collect<OrderUI>(scene)[0];
         var uiData = new SerializedObject(ui);
         var info = (TextMeshProUGUI)uiData.FindProperty("orderInfoText").objectReferenceValue;

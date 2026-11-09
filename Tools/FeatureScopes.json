@@ -1,0 +1,37 @@
+{
+  "protected": [
+    "^Assets/_Game/Scripts/Core/DefenseBuildingSlot\\.cs(?:\\.meta)?$"
+  ],
+  "roles": {
+    "economy": [
+      "^Assets/_Game/Scripts/Features/(Economy|Cows|Production|Orders)(/|\\.meta$)",
+      "^Assets/_Game/(Prefabs/Features/(Cows|Production|Orders)|Prefabs/Modules/Economy|Data/Features/Economy|Art/Features/Economy)(/|\\.meta$)",
+      "^Assets/_Game/Scenes/Workspaces/EconomyWorkspace\\.unity(?:\\.meta)?$",
+      "^Assets/_Game/Scenes/Tests/(CowTest|ProductionTest|OrderTest)\\.unity(?:\\.meta)?$",
+      "^Docs/Features/Economy\\.md$"
+    ],
+    "building": [
+      "^Assets/_Game/Scripts/Features/Building(/|\\.meta$)",
+      "^Assets/_Game/(Prefabs/Features/Building|Prefabs/Modules/Building|Data/Features/Building|Art/Features/Building)(/|\\.meta$)",
+      "^Assets/_Game/Scenes/Workspaces/BuildingWorkspace\\.unity(?:\\.meta)?$",
+      "^Assets/_Game/Scenes/Tests/BuildingTest\\.unity(?:\\.meta)?$",
+      "^Docs/Features/Building\\.md$"
+    ],
+    "enemies": [
+      "^Assets/_Game/Scripts/Features/Enemies(/|\\.meta$)",
+      "^Assets/_Game/(Prefabs/Modules/Enemies|Data/Features/Enemies|Art/Features/Enemies)(/|\\.meta$)",
+      "^Assets/_Game/Data/Defense/(Enemy[0-4]|Wave[0-9]{2})\\.asset(?:\\.meta)?$",
+      "^Assets/_Game/Scenes/Workspaces/EnemiesWorkspace\\.unity(?:\\.meta)?$",
+      "^Assets/_Game/Scenes/Tests/EnemyTest\\.unity(?:\\.meta)?$",
+      "^Docs/Features/Enemies\\.md$"
+    ],
+    "towers": [
+      "^Assets/_Game/Scripts/Features/Towers(/|\\.meta$)",
+      "^Assets/_Game/(Prefabs/Modules/Towers|Data/Features/Towers|Art/Features/Towers)(/|\\.meta$)",
+      "^Assets/_Game/Data/Defense/Tower[0-3]\\.asset(?:\\.meta)?$",
+      "^Assets/_Game/Scenes/Workspaces/TowersWorkspace\\.unity(?:\\.meta)?$",
+      "^Assets/_Game/Scenes/Tests/TowerTest\\.unity(?:\\.meta)?$",
+      "^Docs/Features/Towers\\.md$"
+    ]
+  }
+}

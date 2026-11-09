@@ -87,6 +87,7 @@ public static class PolishCowBuildingSmokeTest
             return;
         }
         if (routine == null || EditorApplication.isCompiling) return;
+        EditorApplication.QueuePlayerLoopUpdate();
         try
         {
             if (EditorApplication.timeSinceStartup > deadline) throw new TimeoutException("Building smoke timed out");
@@ -116,6 +117,7 @@ public static class PolishCowBuildingSmokeTest
 
     private static IEnumerator Verify()
     {
+        Application.runInBackground = true;
         IEnumerator wait = NextFrame();
         while (wait.MoveNext()) yield return null;
         Scene scene = SceneManager.GetActiveScene();

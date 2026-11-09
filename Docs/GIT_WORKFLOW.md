@@ -2,6 +2,8 @@
 
 Mỗi người làm trên nhánh riêng, mở PR vào `main`; người phụ trách base review và merge. Xem [phân công và hợp đồng kỹ thuật](TEAM_GUIDE.md) trước khi sửa code chung.
 
+**Phân công mới:** xem [TEAM_4_WORKSTREAMS](TEAM_4_WORKSTREAMS.md) và chạy `Tools/Test-FeatureScope.ps1` trước PR. Bảng dưới ghi lại cách chia tính năng giai đoạn cũ.
+
 ## 1. Chọn đúng nhánh
 
 | Phần việc | Nhánh gợi ý | Scene được sửa |

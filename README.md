@@ -1,8 +1,12 @@
 # PolishCow
 
+Map Sprout Lands và base phòng thủ mới đã có trong Main: map 64×48 ô, 5 khu mở theo EXP, Core thành/wave, slot xây và dữ liệu cân bằng. Hướng dẫn sử dụng, điểm nối module và phần chưa hoàn thành: [DEFENSE_BASE](Docs/DEFENSE_BASE.md). Combat chưa tự chạy cho đến khi ghép WaveSpawner.
+
 Project Unity 2D mô phỏng trang trại bò sữa, phục vụ bài tập PRU213. Vòng chơi mục tiêu: mua Feed → chăm bò và thu RawMilk → sản xuất BottledMilk → giao đơn nhận Credits → xây dựng và nâng cấp.
 
 Repository: [VuNgocDaii/PRU213-ASM](https://github.com/VuNgocDaii/PRU213-ASM). Giữ nguyên tên thư mục project và repository.
+
+Base cho 4 người: [workspace và hợp đồng module](Docs/TEAM_4_WORKSTREAMS.md), [phân công chi tiết dạng TXT](Docs/PHAN_CONG_CHI_TIET_4_THANH_VIEN.txt). Asset Production/Delivery: [MAIN_ASSET_PLAN](Docs/MAIN_ASSET_PLAN.md).
 
 ## Môi trường
 

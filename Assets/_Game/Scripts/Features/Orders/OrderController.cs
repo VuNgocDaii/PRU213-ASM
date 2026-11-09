@@ -12,11 +12,13 @@ public class OrderController : MonoBehaviour
     [SerializeField, Min(1)] private int maxBottles = 5;
     [SerializeField, Min(1)] private int creditsPerBottle = 25;
     [SerializeField, Min(1)] private int targetOrderCount = 5;
+    [SerializeField] private bool limitDemoOrders = true;
 
     public OrderData CurrentOrder { get; private set; }
     public int CompletedOrdersCount { get; private set; } = 0;
     public int TargetOrderCount => targetOrderCount;
-    public bool IsCompletedAll => CompletedOrdersCount >= targetOrderCount;
+    public bool HasOrderLimit => limitDemoOrders;
+    public bool IsCompletedAll => limitDemoOrders && CompletedOrdersCount >= targetOrderCount;
     public bool IsDelivering { get; private set; } = false;
 
     // Events để UI lắng nghe cập nhật
@@ -118,7 +120,7 @@ public class OrderController : MonoBehaviour
         CompletedOrdersCount++;
         IsDelivering = false;
 
-        if (CompletedOrdersCount >= targetOrderCount)
+        if (IsCompletedAll)
         {
             OnAllOrdersCompleted?.Invoke();
             OnOrderChanged?.Invoke();

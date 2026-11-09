@@ -1,0 +1,481 @@
+POLISHCOW - PHÂN CÔNG CHI TIẾT CHO 4 THÀNH VIÊN
+Project: PRU213-ASM | Unity 6000.6.2f1
+Cập nhật: 09/11/2026
+
+======================================================================
+I. MỤC TIÊU VÀ HIỆN TRẠNG
+======================================================================
+
+Vòng chơi mục tiêu:
+Mua Feed -> nuôi bò -> thu RawMilk -> đóng chai -> bán sữa lấy Credits
+-> xây/nâng tháp -> chống quái -> nhận EXP -> thành lên cấp và mở đất
+-> hạ boss wave 10.
+
+ĐÃ CÓ TRONG BASE:
+- Map Sprout Lands 64x48 ô, 5 khu mở theo 3 cấp thành; camera theo Player.
+- Player, tương tác E, kho/HUD; vòng nuôi bò, sản xuất và giao hàng cũ.
+- Hình production là máy ép, có animation; delivery là shipping bin mở nắp.
+- Core máu thành, EXP, trạng thái game, timer và sự kiện wave.
+- DefenseBuildingSlot kiểm tra loại ô, tiền, cấp và chống xây/trừ tiền trùng.
+- Dữ liệu 10 wave, 5 loại quái, 4 loại tháp bằng ScriptableObject.
+- DefenseSceneContext, interface mục tiêu, installer và mock để làm riêng.
+- Bốn workspace và bốn prefab module riêng; đã chạy kiểm tra base.
+
+CHƯA HOÀN THÀNH:
+Gameplay quái/tháp/wave thật, bệnh bò/thuốc/sữa hỏng, catalog xây/nâng/bán,
+UI chiến đấu đầy đủ, lưu/tải và hoàn thiện âm thanh/VFX.
+Các lớp EconomyFeature/BuildingFeature/EnemiesFeature/TowersFeature hiện
+là đầu mối module, không có nghĩa bốn phần gameplay đã làm xong.
+
+Người phụ trách tích hợp giữ Core/Main. Bốn người bên dưới làm module.
+Tên người thực tế có thể điền thêm vào từng mục, không đổi ranh giới file.
+
+======================================================================
+II. QUY TẮC ĐỂ KHÔNG ĐẠP CHÂN NHAU
+======================================================================
+
+1. Chỉ làm trong nhánh, workspace và thư mục được phân công.
+2. Không cùng sửa Assets/_Game/Scenes/Main.unity.
+3. Không tự sửa Core, Inventory, World, Player/Interaction, shared HUD,
+   TestSupport, công cụ Editor chung, Shared prefab, Packages/ProjectSettings.
+4. DefenseBuildingSlot.cs nằm trong Core và là file base đóng băng.
+   BuildingSlot.cs trong Features/Building là điểm tương tác của module Tuan.
+5. UI, âm thanh và công cụ riêng đặt dưới thư mục module của mình.
+   Script Editor phải nằm trong thư mục con tên Editor.
+6. Không thêm Player, kho, camera, shared HUD hoặc EventSystem vào prefab
+   module. Workspace đã có base; không kéo thêm TeamServices.
+7. Không dùng singleton/Find để lấy kho; dùng DefenseSceneContext hoặc
+   FeatureReferences đã truyền vào. Không scan toàn scene mỗi frame.
+8. Giữ GUID và commit file .meta cùng asset/script/scene/prefab.
+9. Không Apply tham chiếu kho/context của scene về prefab.
+10. Không chạy lại menu setup base hằng ngày; người tích hợp chuẩn bị sẵn.
+11. Cần đổi API chung thì đề xuất thay đổi riêng cho người tích hợp.
+12. Không tự đưa số liệu thử từ workspace vào Main.
+
+Mở scene nhanh:
+Tools -> PolishCow -> Team Base -> Open Team Workspaces.
+Chọn phần của mình, bấm "Mở scene thử" hoặc "Chọn prefab module".
+
+======================================================================
+III. NGƯỜI 1 - KINH TẾ, BÒ, BỆNH, PRODUCTION VÀ DELIVERY
+======================================================================
+
+Nhánh: feature/economy
+Scene chính:
+Assets/_Game/Scenes/Workspaces/EconomyWorkspace.unity
+
+Scene thử phụ:
+Assets/_Game/Scenes/Tests/CowTest.unity
+Assets/_Game/Scenes/Tests/ProductionTest.unity
+Assets/_Game/Scenes/Tests/OrderTest.unity
+
+Thư mục code được sửa:
+Assets/_Game/Scripts/Features/Economy/
+Assets/_Game/Scripts/Features/Cows/
+Assets/_Game/Scripts/Features/Production/
+Assets/_Game/Scripts/Features/Orders/
+
+Prefab bàn giao:
+Assets/_Game/Prefabs/Modules/Economy/EconomyFeature.prefab
+Được sửa prefab Cows/Production/Orders hiện có trong Prefabs/Features/.
+
+Dữ liệu/asset mới:
+Assets/_Game/Data/Features/Economy/
+Assets/_Game/Art/Features/Economy/
+Ghi kết quả vào Docs/Features/Economy.md.
+
+A. Việc cần làm
+
+1. CowHealth và bệnh của bò
+- Triển khai ICowDiseaseTarget: TargetTransform, IsHealthy,
+  CanBeInfected và Infect().
+- Đăng ký bò vào Context.RegisterCow khi active; UnregisterCow khi tắt,
+  bị hủy hoặc đưa về pool.
+- Ruồi chỉ gọi Infect(); mọi quy tắc bệnh do phần này quản lý.
+- Các trạng thái theo kế hoạch: Khỏe, Nhẹ, Vừa, Nặng.
+  Nhẹ: thời gian x1,5; Vừa: x2 và 50% sữa dùng được;
+  Nặng: toàn bộ đầu ra là SpoiledMilk.
+- Mức Vừa và cách chia 50% khi sản lượng chỉ là 1 cần nhóm chốt trước
+  khi code; có thể đề xuất tích lũy phần lẻ/luân phiên để không làm tròn
+  mất toàn bộ sản lượng. Không tự coi đây là quy tắc đã được chốt.
+- Bệnh không chữa tăng mức theo thời gian cấu hình; mốc 30-45 giây
+  là đề xuất, không hard-code vào nhiều script.
+- Chốt thời điểm bệnh/thuốc tác động tới lượt sữa đang chạy, giữ quy tắc
+  chu kỳ đã khóa thông số; ghi rõ trong tài liệu bàn giao.
+
+2. Thuốc và sữa hỏng
+- Dùng ItemType.Medicine và ItemType.SpoiledMilk đã có trong kho.
+- Mua thuốc bằng Credits; giá đọc từ cấu hình, đề xuất ban đầu 20.
+- Tương tác bò bệnh để dùng thuốc; chỉ chữa khi trừ thuốc thành công.
+- Bò khỏe không được bị trừ thuốc vô ích.
+- SpoiledMilk không vào máy, không bán; có thao tác bỏ sữa hỏng.
+- Hiện biểu tượng bệnh, trạng thái chữa và thông báo thiếu thuốc.
+
+3. Sản xuất
+- Giữ luồng RawMilk -> BottledMilk và PowerSource hiện có.
+- Mất điện giữ tiến trình/nguyên liệu; có điện tiếp tục, không trừ lại.
+- Nâng cấp giữa lượt chỉ tác động lượt sau.
+- Giữ animation production đã gắn; phần visual không tự cộng/trừ kho.
+- Cung cấp prefab bò/máy nhận ApplyLevel cho Building sử dụng.
+
+4. Bán sữa, đơn hàng và shop
+- Main đã bỏ giới hạn demo 5 đơn; tiếp tục giữ bán/giao không giới hạn.
+- Làm điểm bán sữa giá cố định; đơn hàng là nhiệm vụ thưởng thêm nếu
+  nhóm giữ thiết kế này. Giá bán cơ sở hiện tại 25 Credits/chai.
+- E và nút UI gọi cùng một phương thức giao dịch.
+- Khóa thao tác khi đang giao để không trừ hàng/nhận thưởng hai lần.
+- Hoàn tất hoặc ngắt hiệu ứng phải xử lý trạng thái giao hàng rõ ràng.
+- Giữ shipping bin mở nắp và drone lấy hàng đã có.
+- Shop Feed/thuốc cập nhật kho qua API, không sửa chữ HUD trực tiếp.
+
+B. Không làm trùng
+- Không tự làm hệ mua/xây/nâng công trình thứ hai; Building thanh toán.
+- Không sửa script ruồi để tự gán bệnh; cung cấp interface cho Enemies.
+- Không tự cộng EXP hoặc sửa máu/cấp thành.
+
+C. Thứ tự triển khai
+Mốc 1: một bò có thể nhiễm/chữa qua nút thử, đăng ký được vào registry.
+Mốc 2: bệnh ảnh hưởng chu kỳ và chất lượng sữa, thuốc trừ đúng kho.
+Mốc 3: bán trực tiếp/đơn thưởng, shop và UI của module.
+Mốc 4: cân bằng, kiểm tra nâng cấp/điện, hoàn thiện prefab bàn giao.
+
+D. Checklist hoàn thành
+[ ] Thiếu Feed/thuốc/nguyên liệu không trao kết quả hoặc trừ sai kho.
+[ ] Không cho ăn trùng lượt; không thu sữa hai lần.
+[ ] Bệnh/chữa/leo thang đúng cấu hình, có dấu hiệu trên bò.
+[ ] Sữa hỏng không sản xuất/bán được và có thể bỏ đi.
+[ ] Giao quá 5 đơn vẫn hoạt động; E/nút không nhận thưởng trùng.
+[ ] Mất/có điện không mất lượt; nâng cấp không đổi lượt đang chạy.
+[ ] Prefab chỉ có tham chiếu nội bộ, được Initialize đúng kho/context.
+
+======================================================================
+IV. NGƯỜI 2 - XÂY DỰNG, NÂNG/BÁN VÀ HÌNH CÔNG TRÌNH
+======================================================================
+
+Nhánh: feature/building
+Scene chính:
+Assets/_Game/Scenes/Workspaces/BuildingWorkspace.unity
+Scene thử phụ: Assets/_Game/Scenes/Tests/BuildingTest.unity
+
+Code: Assets/_Game/Scripts/Features/Building/
+Ngoại lệ: KHÔNG SỬA DefenseBuildingSlot.cs.
+Prefab: Assets/_Game/Prefabs/Modules/Building/BuildingFeature.prefab
+Được sửa prefab trong Assets/_Game/Prefabs/Features/Building/.
+Dữ liệu: Assets/_Game/Data/Features/Building/
+Art: Assets/_Game/Art/Features/Building/
+Tài liệu bàn giao: Docs/Features/Building.md.
+
+Code Building của Tuan đã có trên main: BuildingController,
+BuildingUpgradeController, BuildingPanel và BuildingSlot; giữ phần này và
+phát triển tiếp. DefenseBuildingSlot là ô xây của map mới, nằm trong Core.
+Cần nối UI/catalog hiện có với slot map mới; không cho hai bộ điều khiển
+cùng thanh toán một lần xây.
+
+A. Việc cần làm
+
+1. Catalog và menu xây
+- Catalog chứa prefab, loại ô, giá và điều kiện mở khóa.
+- Dùng Context.Slots; chọn đúng ô Tower/Cow/Machine, không tự sinh
+  một hệ ô độc lập chồng lên base.
+- Làm giao diện chọn vật thể, preview vị trí và xác nhận/hủy.
+- Kiểm tra footprint/vật cản trước khi gọi TryBuild; base hiện không
+  thay việc kiểm tra diện tích của từng prefab.
+- Thiếu tiền, ô đã chiếm, sai loại hoặc chưa mở phải bị từ chối rõ ràng.
+
+2. Luồng thanh toán xây
+- UI chọn -> kiểm tra cấu hình/vị trí -> DefenseBuildingSlot.TryBuild một lần.
+- DefenseBuildingSlot đã trừ tiền, Instantiate, Initialize và chiếm ô.
+- Không TryRemove(Credits) ở UI trước khi gọi TryBuild.
+- Khi thiếu API giải phóng ô/bán công trình, đề xuất bổ sung cho base;
+  không tự sửa biến riêng hoặc DefenseBuildingSlot.cs trên nhánh thành viên.
+
+3. Nâng cấp
+- Building sở hữu giá, cấp hiện tại và giao dịch nâng cấp.
+- Kiểm tra cấp tiếp theo hợp lệ và được mở theo cấp thành trước khi
+  trừ Credits; ApplyLevel hiện trả void, không báo thành công.
+- Chỉ ApplyLevel sau thanh toán thành công.
+- Gọi cùng cấp hai lần phải giữ cùng chỉ số, không nhân dồn.
+- Tháp không nâng vượt cấp thành. Bò/máy theo bảng cấp đã thống nhất.
+- Giá nâng bò/máy trong Excel có cột tích lũy; đổi sang giá từng bước
+  bằng chênh lệch, không thu lại toàn bộ giá tích lũy mỗi lần.
+- Cung cấp controller/UnityEvent để UI Towers gọi thao tác nâng;
+  không yêu cầu Towers viết giao dịch thanh toán riêng.
+
+4. Bán và hình công trình
+- Chọn công trình, hiển thị khoản hoàn tiền theo cấu hình, xác nhận bán.
+- Không bán trùng để nhận tiền nhiều lần; xử lý slot/registry/module
+  khi công trình bị hủy. Tỷ lệ hoàn tiền cần nhóm chốt, không tự đặt.
+- Làm hình thành/công trình 3 cấp trong prefab riêng, nghe cấp thành.
+- Tạo VFX mở đất/nổ hoặc điểm móc để người tích hợp gắn VFX.
+- MapZone, camera và số khu của Main do người tích hợp giữ; không tự
+  sửa World/Main để thay đổi bản đồ trên nhánh này.
+
+Giới hạn theo cấp đang có:
+Cấp 1: 4 ô tháp / 3 ô bò / 1 ô máy.
+Cấp 2: 8 ô tháp / 5 ô bò / 2 ô máy.
+Cấp 3: 12 ô tháp / 8 ô bò / 4 ô máy.
+Thành lên cấp bằng EXP, không bán nâng thành bằng Credits.
+
+B. Thứ tự triển khai
+Mốc 1: xây được một prefab giả qua TryBuild, ô không tạo lần hai.
+Mốc 2: catalog/menu, preview và kiểm tra footprint.
+Mốc 3: nâng/bán, điều kiện cấp và hình công trình.
+Mốc 4: ghép prefab bò/máy/tháp thật, kiểm tra lỗi giao dịch.
+
+C. Checklist hoàn thành
+[ ] Xây đúng prefab/ô và đúng kho; không xây chồng hoặc xây khi bị khóa.
+[ ] Thất bại không mất tiền/chiếm ô; thao tác lặp không tạo trùng.
+[ ] Nâng cấp tối đa/thiếu tiền không bị trừ Credits.
+[ ] ApplyLevel không cộng dồn khi gọi lặp; không vượt bảng hỗ trợ.
+[ ] Bán không hoàn tiền hai lần, không để đối tượng trong registry.
+[ ] UI của Towers dùng được đầu mối nâng cấp mà không phụ thuộc lớp cụ thể.
+
+======================================================================
+V. NGƯỜI 3 - QUÁI, RUỒI, WAVE VÀ BOSS
+======================================================================
+
+Nhánh: feature/enemies
+Scene: Assets/_Game/Scenes/Workspaces/EnemiesWorkspace.unity
+Scene thử phụ: Assets/_Game/Scenes/Tests/EnemyTest.unity
+Code: Assets/_Game/Scripts/Features/Enemies/
+Prefab: Assets/_Game/Prefabs/Modules/Enemies/EnemiesFeature.prefab
+Dữ liệu mới: Assets/_Game/Data/Features/Enemies/
+Art: Assets/_Game/Art/Features/Enemies/
+Được cấu hình Data/Defense/Enemy0..4.asset và Wave01..10.asset.
+Tài liệu bàn giao: Docs/Features/Enemies.md.
+
+A. Việc cần làm
+
+1. EnemyController
+- Máu, tốc độ, trạng thái sống/chết, sát thương thành, EXP/Credits đọc
+  từ EnemyDefinition; HP áp dụng healthMultiplier của wave đúng một lần.
+- Triển khai IEnemyTarget: TargetTransform, IsAlive, IsFlying, TakeDamage.
+- Triển khai ISlowable.ApplySlow(speedMultiplier, seconds).
+- Quy định chồng slow và thời gian hết hiệu lực trong module, khôi phục
+  tốc độ gốc; không nhân liên tiếp làm tốc độ mất dần sau mỗi hit.
+- RegisterEnemy khi active; Unregister khi chết, tắt hoặc trả về pool.
+- Quái chết gọi Game.ReportEnemyKilled đúng một lần; Core cộng tiền/EXP.
+- Quái tới thành: TakeDamage lên CastleHealth rồi despawn, không thưởng.
+- Thanh máu và animation idle/move/hit/die nằm trong prefab quái.
+
+2. Di chuyển và ruồi
+- Quái mặt đất đi theo EnemyRoute.Waypoints theo thứ tự từ spawn tới thành.
+- Chỉ chọn route đang active của khu đã mở; không tự sửa waypoint Main.
+- Ruồi bỏ waypoint, chọn bò qua Context.Cows, ưu tiên bò khỏe khi có.
+- Kiểm tra TargetTransform/CanBeInfected trước khi tiếp cận và gây bệnh;
+  mục tiêu bị hủy thì chọn lại, không giữ reference chết.
+- Ruồi chạm bò gọi ICowDiseaseTarget.Infect một lần rồi despawn.
+- Hành vi hết bò cần chốt: kế hoạch cho bay tới thành nhưng dữ liệu ruồi
+  hiện sát thương thành bằng 0. Không tự coi đây là cơ chế gây damage.
+- Workspace có CowDiseaseTargetDummy để thử mà không chờ CowHealth thật.
+
+3. WaveSpawner và pooling
+- Nghe Context.Game.OnWaveStarted, đọc Context.Waves.
+- Spawn đúng loại, số lượng, spawnInterval và hệ số HP.
+- Theo dõi cả đang spawn lẫn số quái còn sống, bao gồm ruồi.
+- Chỉ kết thúc khi spawn hết và không còn quái cần xử lý.
+- Thưởng completionCredits một lần, rồi gọi Game.CompleteWave(wave).
+- Không tự cộng lại EXP/Credits giết quái đã do Core xử lý.
+- Reset máu, slow, trạng thái chết, target, animation và đăng ký registry
+  khi tái sử dụng; không thêm event listener trùng sau nhiều lần pool.
+- Pause/Won/Lost phải ngừng hành động theo GameState.
+
+4. Nội dung
+- Đủ 5 loại: thường, nhanh, trâu bò, ruồi và boss.
+- Đủ 10 wave theo dữ liệu; boss ở wave 10.
+- Boss cuối chết báo isFinalBoss=true; Core hiện thắng ngay khi boss
+  cuối bị hạ ở wave 10. UI/VFX nghe sự kiện, không tự đổi Won/Lost.
+- Chỉ bật timer tự chạy trong Main sau khi người tích hợp ghép spawner.
+
+B. Thứ tự triển khai
+Mốc 1: một quái đi waypoint, nhận damage, đánh thành và despawn đúng.
+Mốc 2: một wave có spawn/kết thúc/thưởng đúng một lần.
+Mốc 3: ruồi, slow, pooling, đủ loại quái và boss.
+Mốc 4: đủ 10 wave, kiểm tra cùng lúc khoảng 50 quái và các ca pause/end.
+
+C. Checklist hoàn thành
+[ ] Không đi lạc/kẹt khi dùng từng route và khi mở thêm khu.
+[ ] Chết nhận đúng thưởng một lần; lọt tới thành không nhận thưởng.
+[ ] Không kết thúc wave sớm trong lúc vẫn spawn hoặc còn quái sống.
+[ ] Ruồi gây bệnh đúng một lần; mục tiêu mất thì chọn lại an toàn.
+[ ] Registry sạch khi disable/pool/chết; không giữ mục tiêu đã hủy.
+[ ] Slow hết hạn đúng, reset khi pool; pause/end không tiếp tục đánh.
+[ ] Tháp chỉ cần IEnemyTarget/ISlowable, không phải gọi EnemyController.
+
+======================================================================
+VI. NGƯỜI 4 - THÁP, ĐẠN VÀ UI CHIẾN ĐẤU
+======================================================================
+
+Nhánh: feature/towers
+Scene: Assets/_Game/Scenes/Workspaces/TowersWorkspace.unity
+Scene thử phụ: Assets/_Game/Scenes/Tests/TowerTest.unity
+Code/UI/audio: Assets/_Game/Scripts/Features/Towers/ và thư mục module riêng.
+Prefab: Assets/_Game/Prefabs/Modules/Towers/TowersFeature.prefab
+Dữ liệu: Assets/_Game/Data/Features/Towers/
+Art: Assets/_Game/Art/Features/Towers/
+Được cấu hình Data/Defense/Tower0..3.asset.
+Tài liệu bàn giao: Docs/Features/Towers.md.
+
+A. Việc cần làm
+
+1. TowerController
+- Đọc giá, damage, tốc độ bắn, range và cấp mở từ TowerDefinition.
+- Chọn mục tiêu qua Context.Enemies và IEnemyTarget, không gọi lớp
+  EnemyController cụ thể, không Find toàn scene mỗi frame.
+- Kiểm tra IsAlive, TargetTransform, tầm bắn và mục tiêu bay.
+- Chọn mục tiêu trước rồi mới gây damage; không vừa foreach registry
+  vừa gây chết làm danh sách thay đổi ngay trong vòng lặp.
+- Kế thừa/nhận UpgradeTarget, ApplyLevel đặt cấp tuyệt đối.
+
+2. Bốn loại tháp, mỗi loại 3 cấp
+- Cung: damage đơn mục tiêu.
+- Pháo: damage diện rộng; một vụ nổ không gây hit trùng cho cùng quái.
+- Băng: gọi ISlowable.ApplySlow, truyền hệ số tốc độ và thời gian.
+- Bắn tỉa: tầm xa, nhịp bắn chậm, damage cao.
+- Theo kế hoạch, các tháp phải nhắm được cả ruồi khi cấu hình cho phép.
+- Workspace có dummy mặt đất và bay để làm trước khi quái thật hoàn tất.
+
+3. Projectile và pooling
+- Đạn giữ damage chốt lúc bắn; khi mục tiêu chết thì hủy/trả pool an toàn.
+- Một viên đạn không gây damage lặp do nhiều collider/callback.
+- Reset target, vị trí, lifetime, cờ hit và hiệu ứng khi tái sử dụng.
+- Không cộng Credits/EXP ở đạn hoặc tháp; phần Enemy/Core xử lý thưởng.
+- Pause/Won/Lost ngừng bắn và xử lý đạn theo quy ước game.
+
+4. Shop và UI chiến đấu
+- Thành cấp 1 mở Cung; cấp 2 thêm Pháo/Băng; cấp 3 thêm Bắn tỉa.
+- Tháp nâng không vượt cấp thành; mục khóa hiện điều kiện mở.
+- Xây gọi DefenseBuildingSlot.TryBuild, không tự trừ Credits lần nữa.
+- Nút nâng/bán kết nối controller của Building qua Inspector/UnityEvent;
+  không tạo luồng thanh toán thứ hai hoặc phụ thuộc lớp Building cụ thể.
+- Làm canvas riêng trong prefab module cho thông tin HP thành, wave,
+  đếm ngược, EXP/cấp và thông báo mở khóa/thắng/thua.
+- Nghe sự kiện Core; không sửa CastleHUD/InventoryHUD chung hoặc Main.
+- Không tự tạo GameManager thứ hai; Core sở hữu trạng thái game.
+- Âm thanh/VFX bắn, hit, chết, nhận tiền, nổ; tránh mỗi hit tạo AudioSource
+  tồn đọng. Thống nhất với người tích hợp phần âm thanh toàn game.
+
+B. Thứ tự triển khai
+Mốc 1: một tháp bắn dummy, damage và nhịp bắn đúng.
+Mốc 2: projectile/pooling, mục tiêu bay, ApplyLevel.
+Mốc 3: đủ 4 tháp, AOE/slow, shop khóa theo cấp.
+Mốc 4: UI chiến đấu, âm thanh/VFX và ghép với Enemy/Building thật.
+
+C. Checklist hoàn thành
+[ ] Không bắn ngoài range, mục tiêu chết hoặc target đã bị hủy.
+[ ] Bắn đúng dummy bay/mặt đất; không phụ thuộc EnemyController.
+[ ] Một hit gây đúng damage, AOE không nhân damage do nhiều collider.
+[ ] ApplyLevel lặp không cộng dồn; shop/nâng đúng điều kiện cấp thành.
+[ ] UI không trừ tiền trùng với Building, không thưởng quái chết.
+[ ] Pool không giữ target/cờ hit cũ; pause/end ngừng bắn đúng.
+[ ] Canvas riêng không che nút/tương tác của module khác khi ghép.
+
+======================================================================
+VII. HỢP ĐỒNG CHUNG CẦN GIỮ
+======================================================================
+
+DefenseSceneContext cung cấp:
+Inventory, Game, Progress, CastleHealth, Timer, CastleTarget,
+Slots, Routes, Waves, Enemies và Cows.
+
+DefenseModule:
+- Initialize(context) được installer gọi sau mọi Awake của scene.
+- OnConnected: đăng ký registry/sự kiện.
+- OnDisconnected: bỏ đăng ký/sự kiện.
+- Initialize cùng context nhiều lần không làm đăng ký lặp.
+- Awake chỉ lấy component nội bộ, không chạy gameplay cần kho.
+- Khi override OnEnable/OnDisable, giữ lời gọi base hoặc dùng hai hook trên.
+- Spawner/pool tự Initialize đối tượng mới; DefenseBuildingSlot đã truyền kho
+  và context cho đối tượng xây bằng TryBuild.
+
+InventoryManager:
+GetAmount(ItemType), Add(ItemType,amount), TryRemove(ItemType,amount).
+Add trả void; kiểm tra khả năng nhận kết quả trước khi thanh toán nếu cần.
+Chỉ trao vật phẩm khi TryRemove thành công; HUD nghe OnChanged.
+
+GameManager:
+BeginNextWave(); CompleteWave(wave);
+ReportEnemyKilled(exp,credits,isFinalBoss); SetPaused(bool).
+Core giữ Won/Lost và cộng thưởng giết quái.
+
+CastleProgress:
+Cấp 2 ở 495 EXP; cấp 3 ở 3210 EXP; tối đa cấp 3.
+Máu tối đa 120/200/320; lên cấp cộng phần sức chứa tăng thêm,
+giữ sát thương đã nhận. Không đổi quy tắc này ở module riêng.
+
+Mở đất:
+Cấp 1 mở 1 khu, cấp 2 mở 3 khu, cấp 3 mở cả 5 khu.
+Người tích hợp giữ MapZone/camera/slot của Main.
+
+======================================================================
+VIII. PHẦN NGƯỜI TÍCH HỢP GIỮ
+======================================================================
+
+- Main, Core, Player/kho/HUD chung và thay đổi API.
+- Ghép bốn prefab vào Main, gán context và references đúng instance.
+- Khi EconomyFeature đã chứa gameplay cũ, gỡ instance cũ để không nhân đôi.
+- MapZone/camera và cấu hình vị trí/slot/spawn của Main.
+- Điều phối menu chính/pause/kết thúc toàn game và lưu/tải JSON.
+- Lưu tài nguyên, HP/EXP/cấp thành, wave, công trình/tháp và bệnh bò;
+  từng module cung cấp dữ liệu cần lưu, không tự tạo bốn hệ lưu độc lập.
+- Ghép hiệu ứng nổ thành/màn thắng thua, âm thanh toàn game.
+- Chạy kiểm thử toàn vòng chơi, cân bằng và build bản demo.
+
+Các thành viên không tự sửa file chung để làm nhanh. Nếu cần thay đổi,
+gửi mô tả API thiếu và trường hợp sử dụng cho người tích hợp.
+
+======================================================================
+IX. MỐC BÀN GIAO CHUNG VÀ QUY TRÌNH GIT
+======================================================================
+
+Mốc chung 1: mỗi người có một luồng tối thiểu chạy được độc lập.
+Mốc chung 2: ghép một vòng: bán sữa -> xây tháp -> một wave -> EXP -> mở đất.
+Mốc chung 3: bệnh/thuốc, đủ loại quái/tháp, 10 wave, boss và dữ liệu lưu.
+Mốc chung 4: UI/audio/VFX, cân bằng, kiểm thử và build.
+
+Trước khi bắt đầu:
+- Người tích hợp cần commit/push base chung; mọi người tạo nhánh từ cùng
+  commit đó. Xác nhận commit base trên origin trước khi bắt đầu làm.
+- Chỉ switch/pull khi đã cất/commit công việc riêng, tránh mất thay đổi.
+- Nhánh PR đích theo nhóm thống nhất; nếu đang dùng main thì PR vào main.
+
+Trước mỗi PR:
+1. Play scene của mình, thử cả ca thành công và thất bại.
+2. Kiểm tra không lỗi Console trong các bước đã thử.
+3. Commit code/prefab/scene/asset kèm .meta; không commit Library/Temp/Logs.
+4. Chạy kiểm tra phạm vi từ thư mục gốc project:
+
+powershell -NoProfile -ExecutionPolicy Bypass -File Tools/Test-FeatureScope.ps1 -Role economy -BaseRef origin/main -IncludeWorkingTree
+
+Đổi economy thành building / enemies / towers theo người phụ trách.
+Chạy trên nhánh tính năng sau khi base chung đã được commit/push.
+Không dùng lệnh này để đánh giá toàn bộ working tree của người đang dựng base.
+
+5. Cập nhật Docs/Features/<Role>.md gồm:
+   - Đã làm gì, prefab nào bàn giao, cách gán Inspector.
+   - API/sự kiện sử dụng, bước thử và kết quả thực tế.
+   - Asset/nguồn/license đi kèm.
+   - Phần chưa xong, vấn đề cần tích hợp hỗ trợ.
+6. PR gọn theo module; không gom sửa Core/Main vào PR tính năng.
+
+Kiểm tra base do người tích hợp chạy:
+Tools -> PolishCow -> Team Base -> Verify Four Workspaces
+Tools -> PolishCow -> Team Base -> Run Workspace Contract Tests
+Tools -> PolishCow -> Run Main Gameplay Smoke Test
+
+Lưu ý: test base và mock pass không thay việc Play thử tính năng mới.
+
+======================================================================
+X. TÀI LIỆU ĐỐI CHIẾU
+======================================================================
+
+Docs/TEAM_4_WORKSTREAMS.md       : ranh giới module và điểm nối.
+Docs/DEFENSE_BASE.md            : base map/Core và trạng thái triển khai.
+Docs/MAIN_ASSET_PLAN.md         : asset production/delivery đã gắn.
+Docs/Features/Economy.md        : bàn giao người 1.
+Docs/Features/Building.md       : bàn giao người 2.
+Docs/Features/Enemies.md        : bàn giao người 3.
+Docs/Features/Towers.md         : bàn giao người 4.
+Docs/New/PolishCow_BangCanBang.xlsx : thông số đề xuất, cần chơi thử cân bằng.
+
+KẾT THÚC.

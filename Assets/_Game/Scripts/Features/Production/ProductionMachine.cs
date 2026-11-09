@@ -29,6 +29,10 @@ public class ProductionMachine : Interactable
     private float remainingTime;
     private int outputAmount;      // số chai của lượt này (chốt lúc bắt đầu)
 
+    public bool IsProcessing => isProcessing;
+    public bool IsReady => isReady;
+    public bool HasPower => powerSource != null && powerSource.HasPower;
+
     // Thông báo ngắn như "Thiếu RawMilk", hiện trong 2 giây
     private string message;
     private float messageTimer;

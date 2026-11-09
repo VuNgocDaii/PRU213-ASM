@@ -2,6 +2,8 @@
 
 Đọc file này để dùng base chung. Hướng dẫn triển khai cả bốn tính năng: [CODING_GUIDE.md](CODING_GUIDE.md). Tra đường dẫn tại [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md); tạo nhánh và bàn giao theo [GIT_WORKFLOW.md](GIT_WORKFLOW.md).
 
+**Giai đoạn phòng thủ mới:** dùng [TEAM_4_WORKSTREAMS](TEAM_4_WORKSTREAMS.md) cho phân công 4 người và interface liên module. Các mục bên dưới giữ hướng dẫn nông trại cũ; đợt mới gộp Cows/Production/Orders cho một người.
+
 ## 1. Bắt đầu trong 5 bước
 
 1. Mở project bằng Unity **6000.6.2f1**, đợi import và biên dịch xong.
