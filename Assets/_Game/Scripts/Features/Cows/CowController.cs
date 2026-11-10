@@ -13,6 +13,7 @@ public class CowController : MonoBehaviour
     [Header("Tham chiếu")]
     [SerializeField] private FeatureReferences featureReferences;
     [SerializeField] private CowUpgrade cowUpgrade;
+    [SerializeField] private CowHealth cowHealth;
 
     [Header("Trạng thái hiện tại")]
     [SerializeField] private CowState currentState = CowState.Idle;
@@ -28,12 +29,16 @@ public class CowController : MonoBehaviour
     public int RequiredFeedCost => cowUpgrade != null ? cowUpgrade.FeedCost : 1;
     public int PreviewYield => cowUpgrade != null ? cowUpgrade.MilkYield : 1;
 
-    public void Initialize(FeatureReferences references, CowUpgrade upgrade = null)
+    public void Initialize(FeatureReferences references, CowUpgrade upgrade = null, CowHealth health = null)
     {
         featureReferences = references;
         if (upgrade != null)
         {
             cowUpgrade = upgrade;
+        }
+        if (health != null)
+        {
+            cowHealth = health;
         }
     }
 
@@ -46,6 +51,20 @@ public class CowController : MonoBehaviour
         if (cowUpgrade == null)
         {
             cowUpgrade = GetComponentInParent<CowUpgrade>();
+        }
+        if (cowHealth == null)
+        {
+            cowHealth = GetComponent<CowHealth>();
+            if (cowHealth == null)
+            {
+                cowHealth = gameObject.AddComponent<CowHealth>();
+            }
+        }
+
+        var healthUI = GetComponent<CowHealthUI>();
+        if (healthUI == null)
+        {
+            healthUI = gameObject.AddComponent<CowHealthUI>();
         }
     }
 
@@ -61,15 +80,52 @@ public class CowController : MonoBehaviour
         {
             remainingTime = 0f;
             currentState = CowState.Ready;
-            Debug.Log($"[CowController] Bò đã tạo xong sữa! Sẵn sàng thu hoạch ({lockedYield} RawMilk).", this);
+            Debug.Log($"[CowController] Bò đã tạo xong sữa! Sẵn sàng thu hoạch ({lockedYield} sản phẩm).", this);
         }
+    }
+
+    public InventoryManager GetInventory()
+    {
+        if (featureReferences != null && featureReferences.Inventory != null)
+        {
+            return featureReferences.Inventory;
+        }
+
+        InventoryManager inv = null;
+        var module = GetComponentInParent<EconomyFeature>();
+        if (module != null && module.Context != null && module.Context.Inventory != null)
+        {
+            inv = module.Context.Inventory;
+        }
+
+        if (inv == null)
+        {
+            var ctx = FindAnyObjectByType<DefenseSceneContext>();
+            if (ctx != null && ctx.Inventory != null)
+            {
+                inv = ctx.Inventory;
+            }
+        }
+
+        if (inv == null)
+        {
+            inv = FindAnyObjectByType<InventoryManager>();
+        }
+
+        if (inv != null && featureReferences != null && featureReferences.Inventory == null)
+        {
+            featureReferences.Initialize(inv);
+        }
+
+        return inv;
     }
 
     public bool TryFeed()
     {
-        if (featureReferences == null || featureReferences.Inventory == null)
+        InventoryManager inventory = GetInventory();
+        if (inventory == null)
         {
-            Debug.LogWarning("[CowController] Chưa được Initialize với kho hợp lệ.", this);
+            Debug.LogWarning("[CowController] Chưa kết nối được với Inventory.", this);
             return false;
         }
 
@@ -78,15 +134,16 @@ public class CowController : MonoBehaviour
             return false;
         }
 
-        InventoryManager inventory = featureReferences.Inventory;
         int feedCost = RequiredFeedCost;
         int yield = PreviewYield;
-        float duration = cowUpgrade != null ? cowUpgrade.ProductionDuration : 10f;
 
-        // Kiểm tra phòng ngừa tràn số trước khi thực hiện giao dịch
-        if (yield <= 0 || inventory.GetAmount(ItemType.RawMilk) > int.MaxValue - yield)
+        float baseDuration = cowUpgrade != null ? cowUpgrade.ProductionDuration : 10f;
+        float diseaseMult = cowHealth != null ? cowHealth.DurationMultiplier : 1f;
+        float duration = baseDuration * diseaseMult;
+
+        if (yield <= 0 || inventory.GetAmount(ItemType.RawMilk) > int.MaxValue - yield || inventory.GetAmount(ItemType.SpoiledMilk) > int.MaxValue - yield)
         {
-            Debug.LogWarning("[CowController] Kho RawMilk đã đầy hoặc số lượng sản phẩm không hợp lệ.", this);
+            Debug.LogWarning("[CowController] Kho sữa đã đầy hoặc số lượng sản phẩm không hợp lệ.", this);
             return false;
         }
 
@@ -96,7 +153,6 @@ public class CowController : MonoBehaviour
             return false;
         }
 
-        // Chốt thông số cho lượt nuôi hiện tại (không bị ảnh hưởng nếu nâng cấp giữa chừng)
         lockedDuration = duration;
         remainingTime = duration;
         lockedYield = yield;
@@ -108,9 +164,10 @@ public class CowController : MonoBehaviour
 
     public bool TryCollectMilk()
     {
-        if (featureReferences == null || featureReferences.Inventory == null)
+        InventoryManager inventory = GetInventory();
+        if (inventory == null)
         {
-            Debug.LogWarning("[CowController] Chưa được Initialize với kho hợp lệ.", this);
+            Debug.LogWarning("[CowController] Chưa kết nối được với Inventory.", this);
             return false;
         }
 
@@ -119,21 +176,49 @@ public class CowController : MonoBehaviour
             return false;
         }
 
-        InventoryManager inventory = featureReferences.Inventory;
-
-        if (lockedYield <= 0 || inventory.GetAmount(ItemType.RawMilk) > int.MaxValue - lockedYield)
+        if (lockedYield <= 0 || inventory.GetAmount(ItemType.RawMilk) > int.MaxValue - lockedYield || inventory.GetAmount(ItemType.SpoiledMilk) > int.MaxValue - lockedYield)
         {
-            Debug.LogWarning("[CowController] Không thể cộng RawMilk vì vượt giới hạn lưu trữ.", this);
+            Debug.LogWarning("[CowController] Không thể cộng sữa vì vượt giới hạn lưu trữ.", this);
             return false;
         }
 
-        inventory.Add(ItemType.RawMilk, lockedYield);
-        Debug.Log($"[CowController] Thu hoạch sữa thành công (+{lockedYield} RawMilk).", this);
+        AddMilkByDisease(inventory, lockedYield);
 
-        // Đặt lại trạng thái về Idle cho lượt nuôi mới
         currentState = CowState.Idle;
         remainingTime = 0f;
         lockedDuration = 0f;
         return true;
+    }
+
+    private void AddMilkByDisease(InventoryManager inventory, int yield)
+    {
+        var health = cowHealth;
+        DiseaseLevel disease = health != null ? health.CurrentDisease : DiseaseLevel.Healthy;
+
+        switch (disease)
+        {
+            case DiseaseLevel.Severe:
+                inventory.Add(ItemType.SpoiledMilk, yield);
+                Debug.Log($"[CowController] Bò bệnh Severe → +{yield} SpoiledMilk.", this);
+                break;
+
+            case DiseaseLevel.Moderate:
+                int earned = health != null ? health.AccumulateMilk(yield * 0.5f) : yield;
+                if (earned > 0)
+                {
+                    inventory.Add(ItemType.RawMilk, earned);
+                    Debug.Log($"[CowController] Bò bệnh Moderate: tích lũy đủ → +{earned} RawMilk.", this);
+                }
+                else
+                {
+                    Debug.Log($"[CowController] Bò bệnh Moderate: tích lũy {health?.MilkAccumulator ?? 0f:F1}/1.0 chưa đủ.", this);
+                }
+                break;
+
+            default:
+                inventory.Add(ItemType.RawMilk, yield);
+                Debug.Log($"[CowController] Thu hoạch sữa thành công (+{yield} RawMilk).", this);
+                break;
+        }
     }
 }

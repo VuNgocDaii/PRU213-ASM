@@ -482,5 +482,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46bc051eef370e947b41cdb9666cffc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoamingArea
-  size: {x: 5, y: 4}
+  size: {x: 6.5, y: 4}
   centerOffset: {x: 0, y: 0}
