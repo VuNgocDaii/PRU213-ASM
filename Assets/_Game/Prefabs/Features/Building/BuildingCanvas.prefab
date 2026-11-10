@@ -655,6 +655,9 @@ MonoBehaviour:
   actionText: {fileID: 4397779752762080113}
   actionButton: {fileID: 1036087124992126168}
   closeButton: {fileID: 316246519517743324}
+  sellButton: {fileID: 0}
+  sellText: {fileID: 0}
+  catalog: {fileID: 11400000, guid: 51922c07384a56747b0a7082cd26bb5a, type: 3}
 --- !u!1 &6517898275782315615
 GameObject:
   m_ObjectHideFlags: 0
