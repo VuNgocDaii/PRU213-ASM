@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4156015588950423681}
   - component: {fileID: 7659689230648735871}
   - component: {fileID: 1323845410651289753}
+  - component: {fileID: 4314644280080924053}
   m_Layer: 0
   m_Name: EnemiesFeature
   m_TagString: Untagged
@@ -57,3 +58,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b7515f24ffa2c3498d0a07423aa27a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemiesFeature
+--- !u!114 &4314644280080924053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4748737493639165183}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4ed37356d20a9e429685e73bdae30fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WaveSpawner
