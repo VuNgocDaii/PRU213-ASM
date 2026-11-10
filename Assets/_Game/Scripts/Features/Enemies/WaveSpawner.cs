@@ -23,20 +23,21 @@ public class WaveSpawner : DefenseModule
         if (number < 1 || number > Context.Waves.Count) return;
         wave = Context.Waves[number - 1];
         waveNumber = number;
-        StartCoroutine(SpawnWave());
+        StopAllCoroutines();   // wave cũ còn đang thả dở thì dừng, không để 2 wave thả chồng nhau
+        StartCoroutine(SpawnWave(wave));
     }
 
     // Thả lần lượt từng nhóm, mỗi con cách nhau spawnInterval giây.
     // Tạm dừng thì timeScale = 0 nên WaitForSeconds cũng đứng; thắng/thua thì ngừng thả.
-    private IEnumerator SpawnWave()
+    private IEnumerator SpawnWave(WaveDefinition current)
     {
         isSpawning = true;
-        foreach (WaveDefinition.Group group in wave.groups)
+        foreach (WaveDefinition.Group group in current.groups)
         {
             for (int i = 0; i < group.count; i++)
             {
                 if (Context.Game.State == GameState.Won || Context.Game.State == GameState.Lost) yield break;
-                SpawnEnemy(group.enemy, wave.healthMultiplier);
+                SpawnEnemy(group.enemy, current.healthMultiplier);
                 yield return new WaitForSeconds(group.spawnInterval);
             }
         }
