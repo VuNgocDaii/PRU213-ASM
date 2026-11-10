@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Tower3
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
   kind: 3
-  prefab: {fileID: 0}
+  prefab: {fileID: 5633657124888656524, guid: 7795bbcd34f72f64f82df56f25a3434b, type: 3}
   unlockCastleLevel: 3
   buildPrice: 200
   upgradePrices: 8c000000f0000000i
