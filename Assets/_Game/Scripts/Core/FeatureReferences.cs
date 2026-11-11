@@ -3,7 +3,9 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class FeatureReferences : MonoBehaviour
 {
-    public InventoryManager Inventory { get; private set; }
+    [SerializeField] private InventoryManager inventory;
+
+    public InventoryManager Inventory { get => inventory; private set => inventory = value; }
 
     public void Initialize(InventoryManager inventory)
     {
@@ -13,6 +15,6 @@ public class FeatureReferences : MonoBehaviour
             return;
         }
 
-        Inventory = inventory;
+        this.inventory = inventory;
     }
 }

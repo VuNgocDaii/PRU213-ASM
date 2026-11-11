@@ -12,7 +12,7 @@ public class OrderController : MonoBehaviour
     [SerializeField, Min(1)] private int maxBottles = 5;
     [SerializeField, Min(1)] private int creditsPerBottle = 25;
     [SerializeField, Min(1)] private int targetOrderCount = 5;
-    [SerializeField] private bool limitDemoOrders = true;
+    [SerializeField] private bool limitDemoOrders = false;
 
     public OrderData CurrentOrder { get; private set; }
     public int CompletedOrdersCount { get; private set; } = 0;
@@ -53,7 +53,7 @@ public class OrderController : MonoBehaviour
 
         if (IsCompletedAll)
         {
-            OnDeliveryFailed?.Invoke("Bạn đã hoàn thành toàn bộ demo (5/5 đơn)!");
+            OnDeliveryFailed?.Invoke($"Bạn đã hoàn thành toàn bộ ({targetOrderCount}/{targetOrderCount} đơn)!");
             return false;
         }
 

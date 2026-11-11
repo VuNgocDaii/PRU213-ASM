@@ -105,7 +105,7 @@ public class OrderUI : MonoBehaviour
         {
             if (orderInfoText != null)
             {
-                orderInfoText.text = "<b>ĐÃ HOÀN THÀNH TOÀN BỘ 5 ĐƠN!</b>";
+                orderInfoText.text = $"<b>ĐÃ HOÀN THÀNH TOÀN BỘ {orderController.TargetOrderCount} ĐƠN!</b>";
             }
             if (deliverButton != null)
             {
