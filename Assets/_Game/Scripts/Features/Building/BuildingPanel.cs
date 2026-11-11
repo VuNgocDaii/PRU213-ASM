@@ -1,9 +1,10 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-// One shared panel for all three slots, under the feature's own Canvas/PopupLayer.
+// Shared panel for building construction, upgrades, and selling.
 [DisallowMultipleComponent]
 public class BuildingPanel : MonoBehaviour
 {
@@ -15,17 +16,28 @@ public class BuildingPanel : MonoBehaviour
     [SerializeField] private Button actionButton;
     [SerializeField] private Button closeButton;
 
+    [Header("Sell & Catalog Enhancements")]
+    [SerializeField] private Button sellButton;
+    [SerializeField] private TMP_Text sellText;
+    [SerializeField] private BuildingCatalogData catalog;
+
     private BuildingSlot selectedSlot;
     private InventoryManager subscribedInventory;
     private BuildingController subscribedBuilding;
     private int displayedLevel;
     private bool displayedOccupied;
+
+    private List<BuildingCatalogData.Entry> availableEntries = new List<BuildingCatalogData.Entry>();
+    private int currentCatalogIndex = 0;
+
     public BuildingSlot SelectedSlot => selectedSlot;
+    public BuildingCatalogData Catalog { get => catalog; set => catalog = value; }
 
     private void Awake()
     {
         if (actionButton != null) actionButton.onClick.AddListener(Confirm);
         if (closeButton != null) closeButton.onClick.AddListener(Close);
+        if (sellButton != null) sellButton.onClick.AddListener(Sell);
         if (panelRoot != null) panelRoot.SetActive(false);
     }
 
@@ -38,8 +50,65 @@ public class BuildingPanel : MonoBehaviour
         subscribedInventory = subscribedBuilding.Inventory;
         subscribedBuilding.Changed += Refresh;
         if (subscribedInventory != null) subscribedInventory.OnChanged += Refresh;
+
+        SetupCatalogForSlot();
+
         if (panelRoot != null) panelRoot.SetActive(true);
         Refresh();
+    }
+
+    private void SetupCatalogForSlot()
+    {
+        availableEntries.Clear();
+        currentCatalogIndex = 0;
+        if (catalog == null || selectedSlot == null) return;
+
+        DefenseBuildingSlot.Kind kind = selectedSlot.DefenseSlot != null
+            ? selectedSlot.DefenseSlot.SlotKind
+            : DefenseBuildingSlot.Kind.Cow;
+
+        int castleLevel = selectedSlot.Building.CastleProgress != null
+            ? selectedSlot.Building.CastleProgress.CurrentLevel
+            : 3;
+
+        availableEntries = catalog.GetEntriesForKind(kind, castleLevel);
+        if (availableEntries.Count > 0 && !selectedSlot.Building.IsOccupied)
+        {
+            ApplyCatalogEntry(availableEntries[0]);
+        }
+    }
+
+    public void NextCatalogItem()
+    {
+        if (availableEntries.Count <= 1 || (selectedSlot != null && selectedSlot.Building.IsOccupied)) return;
+        currentCatalogIndex = (currentCatalogIndex + 1) % availableEntries.Count;
+        ApplyCatalogEntry(availableEntries[currentCatalogIndex]);
+        Refresh();
+    }
+
+    public void PreviousCatalogItem()
+    {
+        if (availableEntries.Count <= 1 || (selectedSlot != null && selectedSlot.Building.IsOccupied)) return;
+        currentCatalogIndex = (currentCatalogIndex - 1 + availableEntries.Count) % availableEntries.Count;
+        ApplyCatalogEntry(availableEntries[currentCatalogIndex]);
+        Refresh();
+    }
+
+    private void ApplyCatalogEntry(BuildingCatalogData.Entry entry)
+    {
+        if (entry == null || selectedSlot == null) return;
+        selectedSlot.Building.SetBuildConfig(
+            entry.prefab,
+            entry.buildPrice,
+            entry.displayName,
+            entry.footprintSize,
+            entry.unlockCastleLevel,
+            entry.refundRatio
+        );
+        if (selectedSlot.Upgrades != null && entry.upgradePrices != null)
+        {
+            selectedSlot.Upgrades.SetUpgradePrices(entry.upgradePrices);
+        }
     }
 
     public void Close()
@@ -49,6 +118,8 @@ public class BuildingPanel : MonoBehaviour
         subscribedBuilding = null;
         subscribedInventory = null;
         selectedSlot = null;
+        availableEntries.Clear();
+        currentCatalogIndex = 0;
         if (panelRoot != null) panelRoot.SetActive(false);
     }
 
@@ -64,10 +135,20 @@ public class BuildingPanel : MonoBehaviour
         if (selectedSlot == null) return;
         if (!selectedSlot.IsPlayerInRange) { Close(); return; }
         BuildingController building = selectedSlot.Building;
-        // Reject stale UI intents if another action changed the structure in the meantime.
         if (building.IsBusy || displayedOccupied != building.IsOccupied || displayedLevel != building.CurrentLevel) return;
+
         if (building.IsOccupied) selectedSlot.Upgrades?.TryUpgrade();
         else building.TryBuild();
+        Refresh();
+    }
+
+    public void Sell()
+    {
+        if (selectedSlot == null || !selectedSlot.IsPlayerInRange) { Close(); return; }
+        BuildingController building = selectedSlot.Building;
+        if (building == null || building.IsBusy || !building.IsOccupied) return;
+
+        building.TrySell(out int refunded);
         Refresh();
     }
 
@@ -80,21 +161,47 @@ public class BuildingPanel : MonoBehaviour
         displayedOccupied = building.IsOccupied;
         string reason = null;
         bool canAct = false;
+
         if (titleText != null) titleText.text = building.BuildingName;
+
         if (!building.IsOccupied)
         {
             canAct = building.CanBuild(out reason);
-            if (detailsText != null) detailsText.text = "Vị trí trống\nGiá xây: " + building.BuildPrice + " Credits";
+            if (detailsText != null)
+            {
+                string catalogNavHint = availableEntries.Count > 1
+                    ? $"\n[Mục {currentCatalogIndex + 1}/{availableEntries.Count}]"
+                    : "";
+                detailsText.text = $"Vị trí trống\nGiá xây: {building.BuildPrice} Credits{catalogNavHint}";
+            }
             if (actionText != null) actionText.text = "Xây";
+            if (sellButton != null) sellButton.gameObject.SetActive(false);
         }
         else if (upgrades != null)
         {
             canAct = upgrades.CanUpgrade(out reason);
-            if (detailsText != null) detailsText.text = "Cấp " + building.CurrentLevel + " / " + upgrades.MaxLevel +
-                (upgrades.IsMaxLevel ? "\nCấp tối đa" : "\nNâng lên cấp " + (building.CurrentLevel + 1) + ": " + upgrades.NextPrice + " Credits");
+            int refund = building.CalculateRefund();
+            if (detailsText != null)
+            {
+                detailsText.text = $"Cấp {building.CurrentLevel} / {upgrades.MaxLevel}" +
+                    (upgrades.IsMaxLevel ? "\nCấp tối đa" : $"\nNâng lên cấp {building.CurrentLevel + 1}: {upgrades.NextPrice} Credits") +
+                    $"\nGiá trị hoàn tiền khi bán: {refund} Credits";
+            }
             if (actionText != null) actionText.text = upgrades.IsMaxLevel ? "Cấp tối đa" : "Nâng cấp";
+
+            if (sellButton != null)
+            {
+                sellButton.gameObject.SetActive(true);
+                sellButton.interactable = !building.IsBusy;
+                if (sellText != null) sellText.text = $"Bán (+{refund})";
+            }
         }
-        else reason = "Chưa gán cấu hình nâng cấp";
+        else
+        {
+            reason = "Chưa gán cấu hình nâng cấp";
+            if (sellButton != null) sellButton.gameObject.SetActive(false);
+        }
+
         if (actionButton != null) actionButton.interactable = canAct;
         if (statusText != null)
         {
@@ -109,5 +216,6 @@ public class BuildingPanel : MonoBehaviour
         Close();
         if (actionButton != null) actionButton.onClick.RemoveListener(Confirm);
         if (closeButton != null) closeButton.onClick.RemoveListener(Close);
+        if (sellButton != null) sellButton.onClick.RemoveListener(Sell);
     }
 }

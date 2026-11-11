@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5601754513143958035}
   - component: {fileID: 8958835155966217127}
   - component: {fileID: 7407876792092409321}
+  - component: {fileID: 7407876792092409322}
   m_Layer: 0
   m_Name: BuildingFeature
   m_TagString: Untagged
@@ -57,3 +58,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16ac653940f16ec4394f55780601e139, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuildingFeature
+  catalog: {fileID: 11400000, guid: 51922c07384a56747b0a7082cd26bb5a, type: 3}
+  panel: {fileID: 0}
+  castleVisual: {fileID: 0}
+  castleVisualPrefab: {fileID: 1000000001, guid: 8941724395894172439589417243958a, type: 3}
+  towerUpgradeBridge: {fileID: 7407876792092409322}
+--- !u!114 &7407876792092409322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7187642503035429890}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a2176b338d76fd478b3b7c4d1662358, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeBridge
+  castleProgress: {fileID: 0}
+  inventory: {fileID: 0}
+  onTowerUpgraded:
+    m_PersistentCalls:
+      m_Calls: []
+  onTowerUpgradeFailed:
+    m_PersistentCalls:
+      m_Calls: []
