@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 1140000000000000002}
   - component: {fileID: 1140000000000000003}
   m_Layer: 0
-  m_Name: MilkSaleShop
+  m_Name: MilkShop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -178,7 +178,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bd3cd96f752ba7c479407f7a5cfe63d4, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MilkSaleShop
+  m_EditorClassIdentifier: Assembly-CSharp::MilkShop
   interactionText: "C\u1EEDa h\xE0ng b\xE1n s\u1EEFa"
   featureReferences: {fileID: 1140000000000000002}
   bottledMilkSellPrice: 25

@@ -3,6 +3,13 @@ using UnityEngine;
 
 public class InventoryManager : MonoBehaviour
 {
+    public static InventoryManager Instance { get; private set; }
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
     [SerializeField, Min(0)] private int credits = 100;
     [SerializeField, Min(0)] private int feed = 0;
     [SerializeField, Min(0)] private int rawMilk = 0;

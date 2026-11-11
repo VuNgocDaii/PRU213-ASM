@@ -9,76 +9,17 @@ public class CowInteraction : Interactable
     [SerializeField] private CowHealth cowHealth;
     [SerializeField] private FeatureReferences featureReferences;
 
-    public CowHealth Health
-    {
-        get
-        {
-            if (cowHealth != null) return cowHealth;
-            cowHealth = GetComponent<CowHealth>()
-                ?? cowController?.GetComponent<CowHealth>()
-                ?? GetComponentInParent<CowHealth>()
-                ?? GetComponentInChildren<CowHealth>();
-            return cowHealth;
-        }
-    }
+    public CowHealth Health => cowHealth;
 
     private static readonly FieldInfo InteractionTextField =
         typeof(Interactable).GetField("interactionText", BindingFlags.NonPublic | BindingFlags.Instance);
 
     private void Awake()
     {
-        if (cowController == null)
-        {
-            cowController = GetComponent<CowController>();
-        }
-        if (cowHealth == null)
-        {
-            cowHealth = Health;
-        }
-        if (featureReferences == null)
-        {
-            featureReferences = GetComponentInParent<FeatureReferences>();
-        }
         UpdateHintText();
     }
 
     private PlayerInteraction cachedPlayer;
-
-    public InventoryManager GetInventory()
-    {
-        if (featureReferences != null && featureReferences.Inventory != null)
-        {
-            return featureReferences.Inventory;
-        }
-
-        InventoryManager inv = null;
-        var module = GetComponentInParent<EconomyFeature>();
-        if (module != null && module.Context != null && module.Context.Inventory != null)
-        {
-            inv = module.Context.Inventory;
-        }
-
-        if (inv == null)
-        {
-            var ctx = FindAnyObjectByType<DefenseSceneContext>();
-            if (ctx != null && ctx.Inventory != null)
-            {
-                inv = ctx.Inventory;
-            }
-        }
-
-        if (inv == null)
-        {
-            inv = FindAnyObjectByType<InventoryManager>();
-        }
-
-        if (inv != null && featureReferences != null && featureReferences.Inventory == null)
-        {
-            featureReferences.Initialize(inv);
-        }
-
-        return inv;
-    }
 
     private void Update()
     {
@@ -127,16 +68,17 @@ public class CowInteraction : Interactable
             return false;
         }
 
-        InventoryManager inventory = GetInventory();
+        InventoryManager inventory = InventoryManager.Instance;
         if (inventory == null || inventory.GetAmount(ItemType.Medicine) <= 0)
         {
             Debug.LogWarning($"[CowInteraction] {name}: Không có Medicine để chữa bệnh [{health.CurrentDisease}]. Hãy đến MedicineShop mua thuốc trước (20 Credits).", this);
             return false;
         }
 
+        var before = health.CurrentDisease;
         if (health.TryHeal(inventory))
         {
-            Debug.Log($"[CowInteraction] {name}: [Phím F] Đã dùng 1 Medicine chữa khỏi bệnh cho bò ({health.CurrentDisease} -> Healthy)!", this);
+            Debug.Log($"[CowInteraction] {name}: [F] Dùng 1 Medicine chữa bớt bệnh ({before} -> {health.CurrentDisease})!", this);
             UpdateHintText();
             return true;
         }
@@ -199,7 +141,7 @@ public class CowInteraction : Interactable
         }
 
         var health = Health;
-        InventoryManager inventory = GetInventory();
+        InventoryManager inventory = InventoryManager.Instance;
 
         string mainAction = "";
         switch (cowController.CurrentState)
@@ -213,7 +155,7 @@ public class CowInteraction : Interactable
                 break;
 
             case CowState.Ready:
-                mainAction = $"Thu hoạch sữa ({cowController.LockedYield} SP)";
+                mainAction = $"Thu hoạch sữa ({cowController.LockedMilkAmount} SP)";
                 break;
 
             default:
@@ -223,10 +165,11 @@ public class CowInteraction : Interactable
 
         if (health != null && !health.IsHealthy)
         {
-            bool hasMedicine = inventory != null && inventory.GetAmount(ItemType.Medicine) > 0;
+            int medicineNeeded = health.CurrentDisease == DiseaseLevel.Severe ? 2 : 1;
+            bool hasMedicine = inventory != null && inventory.GetAmount(ItemType.Medicine) >= medicineNeeded;
             string diseaseTag = hasMedicine
                 ? $" | [F: Chữa bệnh {health.CurrentDisease} (-1 Thuốc)]"
-                : $" | [Bò bệnh {health.CurrentDisease} - Cần 1 Thuốc]";
+                : $" | [Bò bệnh {health.CurrentDisease} - Cần {medicineNeeded} Thuốc]";
             return mainAction + diseaseTag;
         }
 

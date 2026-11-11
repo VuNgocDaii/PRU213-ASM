@@ -28,31 +28,9 @@ public class MedicineShop : Interactable
         UpdateHintText();
     }
 
-    public InventoryManager GetInventory()
-    {
-        if (featureReferences != null && featureReferences.Inventory != null)
-        {
-            return featureReferences.Inventory;
-        }
-
-        var module = GetComponentInParent<EconomyFeature>();
-        if (module != null && module.Context != null && module.Context.Inventory != null)
-        {
-            return module.Context.Inventory;
-        }
-
-        var ctx = FindAnyObjectByType<DefenseSceneContext>();
-        if (ctx != null && ctx.Inventory != null)
-        {
-            return ctx.Inventory;
-        }
-
-        return FindAnyObjectByType<InventoryManager>();
-    }
-
     public override void Interact()
     {
-        InventoryManager inventory = GetInventory();
+        InventoryManager inventory = InventoryManager.Instance;
         if (inventory == null)
         {
             Debug.LogError($"{name}: MedicineShop chưa kết nối được với Inventory!", this);

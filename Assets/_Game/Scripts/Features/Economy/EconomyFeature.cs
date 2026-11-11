@@ -58,7 +58,7 @@ public class EconomyFeature : DefenseModule
     }
 
     /// <summary>
-    /// Đăng ký một con bò mới (ví dụ bò vừa mua ở CowPurchaseShop) để ruồi có thể lây bệnh.
+    /// Đăng ký một con bò mới (ví dụ bò vừa mua ở CowShop) để ruồi có thể lây bệnh.
     /// </summary>
     public bool RegisterCow(CowHealth cow)
     {

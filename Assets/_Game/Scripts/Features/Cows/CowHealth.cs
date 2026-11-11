@@ -98,18 +98,25 @@ public class CowHealth : MonoBehaviour, ICowDiseaseTarget
     }
 
     /// <summary>
-    /// Dùng 1 Medicine từ kho để chữa về Healthy. Trả true nếu thành công.
+    /// Dùng 1 Medicine từ kho để chữa bớt một cấp bệnh.
+    /// Severe → Moderate ; Moderate và Mild → Healthy. Trả true nếu thành công.
     /// </summary>
     public bool TryHeal(InventoryManager inventory)
     {
         if (inventory == null || currentDisease == DiseaseLevel.Healthy) return false;
         if (!inventory.TryRemove(ItemType.Medicine, 1)) return false;
 
-        currentDisease = DiseaseLevel.Healthy;
+        var before = currentDisease;
+
+        if (currentDisease == DiseaseLevel.Severe)
+            currentDisease = DiseaseLevel.Moderate;
+        else
+            currentDisease = DiseaseLevel.Healthy;
+
         milkAccumulator = 0f;
         escalationTimer = 0f;
         OnDiseaseChanged?.Invoke();
-        Debug.Log($"[CowHealth] {name} đã được chữa khỏi bệnh.", this);
+        Debug.Log($"[CowHealth] {name}: {before} → {currentDisease} (dùng 1 Medicine)", this);
         return true;
     }
 
@@ -161,7 +168,7 @@ public class CowHealth : MonoBehaviour, ICowDiseaseTarget
     [ContextMenu("Test/Try Heal With Inventory (Use 1 Medicine)")]
     public void TestTryHealWithInventory()
     {
-        var inv = FindAnyObjectByType<InventoryManager>();
+        var inv = InventoryManager.Instance;
         if (inv != null)
         {
             bool success = TryHeal(inv);

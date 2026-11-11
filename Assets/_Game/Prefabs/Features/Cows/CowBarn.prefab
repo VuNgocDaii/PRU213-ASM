@@ -122,6 +122,8 @@ GameObject:
   - component: {fileID: 2240626257479848935}
   - component: {fileID: 1923841474538906153}
   - component: {fileID: 1416007941127905984}
+  - component: {fileID: 8200000000000000001}
+  - component: {fileID: 8200000000000000002}
   m_Layer: 0
   m_Name: Cow
   m_TagString: Untagged
@@ -325,6 +327,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CowController
   featureReferences: {fileID: 6626816293762746001}
   cowUpgrade: {fileID: 6626380413792674720}
+  cowHealth: {fileID: 8200000000000000001}
   currentState: 0
   remainingTime: 0
   lockedDuration: 0
@@ -343,6 +346,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CowInteraction
   interactionText: "T\u01B0\u01A1ng t\xE1c"
   cowController: {fileID: 1923841474538906153}
+  cowHealth: {fileID: 8200000000000000001}
+  featureReferences: {fileID: 6626816293762746001}
 --- !u!1 &6263414143111164516
 GameObject:
   m_ObjectHideFlags: 0
@@ -484,3 +489,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoamingArea
   size: {x: 6.5, y: 4}
   centerOffset: {x: 0, y: 0}
+--- !u!114 &8200000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3889854360194910554}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b069143656fd82f4fb10afde8a2f9363, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CowHealth
+  currentDisease: 0
+  autoEscalate: 1
+  escalationDuration: 40
+  escalationTimer: 0
+--- !u!114 &8200000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3889854360194910554}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc179a85bee4d5a4f936dabf15452035, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CowHealthUI

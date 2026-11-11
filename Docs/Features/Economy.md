@@ -17,7 +17,7 @@
     - DurationMultiplier: Healthy = 1.0x, Mild = 1.5x, Moderate = 2.0x, Severe = 2.0x.
     - Sữa đầu ra: Mild ra RawMilk bình thường; Moderate dùng cơ chế fractional accumulator (0.5/lượt, đủ 1.0 mới thu 1 RawMilk); Severe ra 100% SpoiledMilk.
   - **Tự động leo thang bệnh**: Bệnh không được chữa trị sẽ tự leo thang sau 40 giây (chuẩn theo tài liệu thiết kế 30-45s).
-  - Phương thức TryHeal(inventory): Tiêu thụ 1 Medicine để đưa bò về Healthy, reset bộ đếm leo thang và bộ tích lũy sữa.
+  - Phương thức TryHeal(inventory): Tiêu thụ 1 Medicine để chữa bớt một cấp bệnh. Severe → Moderate, Moderate/Mild → Healthy (cần 2 thuốc từ Severe để khỏi), reset bộ đếm leo thang và bộ tích lũy sữa.
   - Tự động đăng ký và hủy đăng ký với DefenseSceneContext (RegisterCow/UnregisterCow).
   - Hỗ trợ đầy đủ ContextMenu để test nhanh các cấp độ bệnh trực tiếp trên Inspector.
 - **CowController.cs**:
@@ -27,7 +27,7 @@
 - **CowInteraction.cs**:
   - Kế thừa Interactable, cập nhật gợi ý động:
     - Nhấn **E**: Cho bò ăn (TryFeed) hoặc thu hoạch sữa (TryCollectMilk).
-    - Nhấn **F**: Chữa bệnh chủ động (TryHealCow) tiêu tốn 1 Medicine, không ép người chơi phải chữa bệnh mới được cho ăn.
+    - Nhấn **F**: Chữa bệnh chủ động (TryHealCow) tiêu tốn 1 Medicine, chữa bớt một cấp bệnh (Severe → Moderate, Moderate/Mild → Healthy), không ép người chơi phải chữa bệnh mới được cho ăn.
 - **CowUpgrade.cs & CowMovement.cs**: Hoàn thiện nâng cấp 3 cấp và di chuyển trong RoamingArea.
 
 ### Module Economy (Features/Economy/)
@@ -38,9 +38,8 @@
   - Cung cấp ContextMenu: Test/Infect All Cows, Test/Heal All Cows, Test/Add Test Resources.
 - **MedicineShop.cs**:
   - Điểm tương tác mua thuốc (E): Mua 1 Medicine với 20 Credits (cấu hình linh hoạt qua Inspector).
-- **MilkSaleShop.cs**:
-  - Điểm tương tác bán sữa trực tiếp (E): Bán BottledMilk (+25 Credits) hoặc RawMilk (+10 Credits) mà không cần phụ thuộc vào đơn hàng ngẫu nhiên.
-  - Hỗ trợ đổ bỏ SpoiledMilk để dọn dẹp kho rác khi không có sữa tốt để bán.
+- **MilkShop.cs**:
+  - Điểm tương tác bán sữa trực tiếp (E): Chỉ bán BottledMilk (+25 Credits/chai) mà không cần phụ thuộc vào đơn hàng ngẫu nhiên.
 - **Visuals/CowHealthUI.cs**:
   - Hiển thị nhãn trạng thái bệnh nổi trên đầu bò qua TextMeshPro (vàng cho Mild, cam cho Moderate, đỏ cho Severe, ẩn khi Healthy).
 
@@ -63,7 +62,7 @@
 | **Enemies (Ruồi)** | ICowDiseaseTarget.Infect() | CowHealth.Infect() |
 | **Enemies (Ruồi)** | Context.Cows | EconomyFeature đăng ký qua Context.RegisterCow |
 | **Building** | UpgradeTarget.ApplyLevel(level) | CowUpgrade và MachineUpgrade |
-| **Core / UI** | InventoryManager | Dùng Medicine, SpoiledMilk, RawMilk, BottledMilk, Feed, Credits |
+| **Core / UI** | InventoryManager | Dùng Medicine, SpoiledMilk, RawMilk, BottledMilk, Feed, Credits. Cung cấp `InventoryManager.Instance` (singleton qua `Awake()`), các module gọi trực tiếp thay vì viết `GetInventory()`. |
 
 ---
 
@@ -82,13 +81,13 @@
      - Chờ 40s không chữa: Bệnh tự động nhảy sang cấp tiếp theo.
    - Đến `MedicineShop`, nhấn E mua thuốc (-20 Credits, +1 Medicine).
    - Đến gần bò đang bệnh: Nhấn F để chữa khỏi bệnh về Healthy, hoặc nhấn E để tiếp tục cho ăn/thu hoạch.
-   - Đến `MilkSaleShop`: Nhấn E bán sữa lấy Credits hoặc dọn kho SpoiledMilk.
+   - Đến `MilkShop`: Nhấn E bán BottledMilk lấy Credits.
 3. **Kiểm tra phạm vi file:**
    - `Tools/Test-FeatureScope.ps1 -Role economy` hợp lệ với các thư mục thuộc quyền sở hữu của Economy.
 
 ---
 
-## 4. Hệ thống mua bò (CowPurchaseShop)
+## 4. Hệ thống mua bò (CowShop)
 
 ### Thiết kế: 1 chuồng nhiều bò
 
@@ -111,7 +110,7 @@ Mỗi `CowBarn` có thể chứa nhiều con bò độc lập (`IndividualCow`).
 
 | File | Mô tả |
 |---|---|
-| `Scripts/Features/Economy/CowPurchaseShop.cs` | Script quầy bán bò (Interactable, nhấn E) |
+| `Scripts/Features/Economy/CowShop.cs` | Script quầy bán bò (Interactable, nhấn E) |
 | `Prefabs/Features/Cows/IndividualCow.prefab` | Prefab con bò độc lập (tạo bởi Editor menu) |
 | `Prefabs/Modules/Economy/CowShop.prefab` | Prefab quầy shop mua bò |
 
