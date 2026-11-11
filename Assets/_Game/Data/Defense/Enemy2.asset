@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Enemy2
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   kind: 2
-  prefab: {fileID: 0}
+  prefab: {fileID: 863221216017602067, guid: b2937cb4187f1f94291d67fcf4f545fe, type: 3}
   health: 120
   speed: 0.6
   castleDamage: 15
