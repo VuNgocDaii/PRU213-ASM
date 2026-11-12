@@ -2,22 +2,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Person 1 — Economy composition root.
-// DefenseModuleInstaller.Start() calls Initialize(context) after all Awakes.
 public class EconomyFeature : DefenseModule
 {
     private CowHealth[] cowHealths;
 
-    private void Awake()
-    {
-        RefreshCows();
-    }
+    private void Awake() => RefreshCows();
 
     public void RefreshCows()
     {
-        // Ưu tiên tìm trong module hierarchy
         cowHealths = GetComponentsInChildren<CowHealth>(true);
-
-        // Nếu prefab module chưa chứa bò mà bò đặt sẵn ở scene workspace
         if (cowHealths == null || cowHealths.Length == 0)
         {
             cowHealths = FindObjectsByType<CowHealth>(FindObjectsInactive.Include);
@@ -31,10 +24,7 @@ public class EconomyFeature : DefenseModule
         {
             foreach (var cow in cowHealths)
             {
-                if (cow != null)
-                {
-                    cow.RegisterWith(Context);
-                }
+                if (cow != null) cow.RegisterWith(Context);
             }
         }
 
@@ -47,19 +37,13 @@ public class EconomyFeature : DefenseModule
         {
             foreach (var cow in cowHealths)
             {
-                if (cow != null)
-                {
-                    cow.Unregister();
-                }
+                if (cow != null) cow.Unregister();
             }
         }
 
         Debug.Log("[EconomyFeature] Disconnected from DefenseSceneContext.", this);
     }
 
-    /// <summary>
-    /// Đăng ký một con bò mới (ví dụ bò vừa mua ở CowShop) để ruồi có thể lây bệnh.
-    /// </summary>
     public bool RegisterCow(CowHealth cow)
     {
         if (cow == null) return false;
@@ -82,8 +66,7 @@ public class EconomyFeature : DefenseModule
         return false;
     }
 
-    // --- Context Menus for Testing in Inspector ---
-    [ContextMenu("Test/Infect All Cows (Lây bệnh cho tất cả bò)")]
+    [ContextMenu("Test/Infect All Cows")]
     public void TestInfectAllCows()
     {
         RefreshCows();
@@ -96,7 +79,7 @@ public class EconomyFeature : DefenseModule
         }
     }
 
-    [ContextMenu("Test/Heal All Cows (Chữa khỏi cho tất cả bò)")]
+    [ContextMenu("Test/Heal All Cows")]
     public void TestHealAllCows()
     {
         RefreshCows();
@@ -109,7 +92,7 @@ public class EconomyFeature : DefenseModule
         }
     }
 
-    [ContextMenu("Test/Add Test Resources (+100 Credits, +10 Medicine, +20 Feed)")]
+    [ContextMenu("Test/Add Test Resources")]
     public void TestAddResources()
     {
         if (Context != null && Context.Inventory != null)

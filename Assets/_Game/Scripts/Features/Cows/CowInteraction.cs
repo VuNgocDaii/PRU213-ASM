@@ -1,4 +1,3 @@
-using System.Reflection;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -9,17 +8,17 @@ public class CowInteraction : Interactable
     [SerializeField] private CowHealth cowHealth;
     [SerializeField] private FeatureReferences featureReferences;
 
-    public CowHealth Health => cowHealth;
+    public CowHealth Health => cowHealth != null ? cowHealth : (cowHealth = GetComponent<CowHealth>());
 
-    private static readonly FieldInfo InteractionTextField =
-        typeof(Interactable).GetField("interactionText", BindingFlags.NonPublic | BindingFlags.Instance);
+    private PlayerInteraction cachedPlayer;
 
     private void Awake()
     {
+        if (cowController == null) cowController = GetComponent<CowController>();
+        if (cowHealth == null) cowHealth = GetComponent<CowHealth>();
+        if (featureReferences == null) featureReferences = GetComponentInParent<FeatureReferences>();
         UpdateHintText();
     }
-
-    private PlayerInteraction cachedPlayer;
 
     private void Update()
     {
@@ -29,25 +28,19 @@ public class CowInteraction : Interactable
 
     private bool IsPlayerInRange()
     {
-        if (cachedPlayer == null)
-        {
-            cachedPlayer = FindAnyObjectByType<PlayerInteraction>();
-        }
+        if (cachedPlayer == null) cachedPlayer = FindAnyObjectByType<PlayerInteraction>();
         if (cachedPlayer == null) return false;
 
         float maxRange = 2.0f;
-        float distSq = ((Vector2)cachedPlayer.transform.position - (Vector2)transform.position).sqrMagnitude;
-        return distSq <= maxRange * maxRange;
+        return ((Vector2)cachedPlayer.transform.position - (Vector2)transform.position).sqrMagnitude <= maxRange * maxRange;
     }
 
     private void CheckSecondaryInput()
     {
         if (!IsPlayerInRange()) return;
 
-        UnityEngine.InputSystem.Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
-        if (keyboard == null) return;
-
-        if (keyboard.fKey.wasPressedThisFrame || keyboard.hKey.wasPressedThisFrame)
+        var keyboard = UnityEngine.InputSystem.Keyboard.current;
+        if (keyboard != null && (keyboard.fKey.wasPressedThisFrame || keyboard.hKey.wasPressedThisFrame))
         {
             TryHealCow();
         }
@@ -56,22 +49,12 @@ public class CowInteraction : Interactable
     public bool TryHealCow()
     {
         var health = Health;
-        if (health == null)
-        {
-            Debug.LogWarning("[CowInteraction] Bò không có CowHealth.", this);
-            return false;
-        }
+        if (health == null || health.IsHealthy) return false;
 
-        if (health.IsHealthy)
-        {
-            Debug.Log("[CowInteraction] Bò đang hoàn toàn khỏe mạnh, không cần chữa.", this);
-            return false;
-        }
-
-        InventoryManager inventory = InventoryManager.Instance;
+        var inventory = GetInventory();
         if (inventory == null || inventory.GetAmount(ItemType.Medicine) <= 0)
         {
-            Debug.LogWarning($"[CowInteraction] {name}: Không có Medicine để chữa bệnh [{health.CurrentDisease}]. Hãy đến MedicineShop mua thuốc trước (20 Credits).", this);
+            Debug.LogWarning($"[CowInteraction] {name}: Không có Medicine để chữa bệnh [{health.CurrentDisease}].", this);
             return false;
         }
 
@@ -88,26 +71,17 @@ public class CowInteraction : Interactable
 
     public override void Interact()
     {
-        if (cowController == null)
-        {
-            cowController = GetComponent<CowController>();
-        }
-        if (cowController == null)
-        {
-            Debug.LogWarning("[CowInteraction] Chưa gán CowController.", this);
-            return;
-        }
+        if (cowController == null) cowController = GetComponent<CowController>();
+        if (cowController == null) return;
 
         switch (cowController.CurrentState)
         {
             case CowState.Idle:
                 cowController.TryFeed();
                 break;
-
             case CowState.Producing:
-                Debug.Log($"[CowInteraction] Bò đang nhai cỏ và tạo sữa. Còn lại: {cowController.RemainingTime:F1}s.", this);
+                Debug.Log($"[CowInteraction] Bò đang tạo sữa. Còn lại: {cowController.RemainingTime:F1}s.", this);
                 break;
-
             case CowState.Ready:
                 cowController.TryCollectMilk();
                 break;
@@ -116,57 +90,33 @@ public class CowInteraction : Interactable
         UpdateHintText();
     }
 
-    public new string GetInteractionText()
-    {
-        return BuildCurrentText();
-    }
+    public new string GetInteractionText() => BuildCurrentText();
 
     private void UpdateHintText()
     {
-        if (InteractionTextField != null)
-        {
-            InteractionTextField.SetValue(this, BuildCurrentText());
-        }
+        var field = typeof(Interactable).GetField("interactionText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        field?.SetValue(this, BuildCurrentText());
     }
 
     private string BuildCurrentText()
     {
-        if (cowController == null)
+        if (cowController == null) cowController = GetComponent<CowController>();
+        if (cowController == null) return "Kiểm tra bò";
+
+        string mainAction = cowController.CurrentState switch
         {
-            cowController = GetComponent<CowController>();
-        }
-        if (cowController == null)
-        {
-            return "Kiểm tra bò";
-        }
+            CowState.Idle => $"Cho bò ăn ({cowController.RequiredFeedCost} Feed)",
+            CowState.Producing => $"Đang tạo sữa ({cowController.RemainingTime:F0}s)",
+            CowState.Ready => $"Thu hoạch sữa ({cowController.LockedMilkAmount} SP)",
+            _ => "Tương tác"
+        };
 
         var health = Health;
-        InventoryManager inventory = InventoryManager.Instance;
-
-        string mainAction = "";
-        switch (cowController.CurrentState)
-        {
-            case CowState.Idle:
-                mainAction = $"Cho bò ăn ({cowController.RequiredFeedCost} Feed)";
-                break;
-
-            case CowState.Producing:
-                mainAction = $"Đang tạo sữa ({cowController.RemainingTime:F0}s)";
-                break;
-
-            case CowState.Ready:
-                mainAction = $"Thu hoạch sữa ({cowController.LockedMilkAmount} SP)";
-                break;
-
-            default:
-                mainAction = "Tương tác";
-                break;
-        }
-
         if (health != null && !health.IsHealthy)
         {
             int medicineNeeded = health.CurrentDisease == DiseaseLevel.Severe ? 2 : 1;
-            bool hasMedicine = inventory != null && inventory.GetAmount(ItemType.Medicine) >= medicineNeeded;
+            var inv = GetInventory();
+            bool hasMedicine = inv != null && inv.GetAmount(ItemType.Medicine) >= medicineNeeded;
             string diseaseTag = hasMedicine
                 ? $" | [F: Chữa bệnh {health.CurrentDisease} (-1 Thuốc)]"
                 : $" | [Bò bệnh {health.CurrentDisease} - Cần {medicineNeeded} Thuốc]";
@@ -176,15 +126,19 @@ public class CowInteraction : Interactable
         return mainAction;
     }
 
-    [ContextMenu("Test/Press E (Feed or Collect)")]
-    public void TestInteract()
+    private InventoryManager GetInventory()
     {
-        Interact();
+        if (featureReferences != null && featureReferences.Inventory != null)
+        {
+            return featureReferences.Inventory;
+        }
+
+        return null;
     }
 
+    [ContextMenu("Test/Press E (Feed or Collect)")]
+    public void TestInteract() => Interact();
+
     [ContextMenu("Test/Press F (Heal with 1 Medicine)")]
-    public void TestHealWithF()
-    {
-        TryHealCow();
-    }
+    public void TestHealWithF() => TryHealCow();
 }

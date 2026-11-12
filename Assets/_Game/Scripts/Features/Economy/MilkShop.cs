@@ -1,4 +1,3 @@
-using System.Reflection;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -7,12 +6,9 @@ public class MilkShop : Interactable
     [Header("Tham chiếu")]
     [SerializeField] private FeatureReferences featureReferences;
 
-    [Header("Bán BottledMilk (0 = tắt)")]
-    [SerializeField, Min(0)] private int bottledMilkSellPrice = 25;
-    [SerializeField, Min(1)] private int bottledMilkBatchSize = 1;
-
-    private static readonly FieldInfo InteractionTextField =
-        typeof(Interactable).GetField("interactionText", BindingFlags.NonPublic | BindingFlags.Instance);
+    [Header("Cấu hình Shop Sữa")]
+    [SerializeField, Min(1)] private int milkSellPrice = 25;    // Nhận 25 Credits
+    [SerializeField, Min(1)] private int milkBatchSize = 1;     // Cần 1 BottledMilk
 
     private void Awake()
     {
@@ -30,63 +26,68 @@ public class MilkShop : Interactable
 
     public override void Interact()
     {
-        InventoryManager inventory = InventoryManager.Instance;
+        var inventory = GetInventory();
         if (inventory == null)
         {
-            Debug.LogError($"{name}: MilkShop chưa kết nối được với Inventory!", this);
+            Debug.LogError($"{name}: MilkShop chưa được Initialize FeatureReferences!", this);
             return;
         }
 
-        // Chỉ bán BottledMilk
-        if (bottledMilkSellPrice > 0 && TrySell(inventory, ItemType.BottledMilk, bottledMilkBatchSize, bottledMilkSellPrice))
+        // Kiểm tra đủ BottledMilk để bán
+        if (inventory.GetAmount(ItemType.BottledMilk) < milkBatchSize)
         {
-            UpdateHintText();
+            Debug.LogWarning("MilkShop: Không có BottledMilk để bán!", this);
             return;
         }
 
-        Debug.LogWarning("MilkShop: Không có BottledMilk để bán!", this);
-    }
+        int reward = milkBatchSize * milkSellPrice;
 
-    private bool TrySell(InventoryManager inv, ItemType milk, int batch, int pricePerUnit)
-    {
-        if (inv.GetAmount(milk) < batch) return false;
+        // Kiểm tra tràn số lượng Credits trong kho
+        if (inventory.GetAmount(ItemType.Credits) > int.MaxValue - reward)
+        {
+            Debug.LogWarning("MilkShop: Kho Credits đã đạt giới hạn tối đa!", this);
+            return;
+        }
 
-        int reward = batch * pricePerUnit;
-        if (inv.GetAmount(ItemType.Credits) > int.MaxValue - reward) return false;
-
-        if (!inv.TryRemove(milk, batch)) return false;
-
-        inv.Add(ItemType.Credits, reward);
-        Debug.Log($"MilkShop: Đã bán {batch} {milk} → +{reward} Credits.");
-        return true;
+        // Trừ BottledMilk và cộng Credits
+        if (inventory.TryRemove(ItemType.BottledMilk, milkBatchSize))
+        {
+            inventory.Add(ItemType.Credits, reward);
+            Debug.Log($"MilkShop: Đã bán thành công {milkBatchSize} BottledMilk, nhận được {reward} Credits!");
+            UpdateHintText();
+        }
     }
 
     private void UpdateHintText()
     {
-        if (InteractionTextField == null) return;
+        var field = typeof(Interactable).GetField("interactionText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (field == null) return;
 
-        InventoryManager inv = InventoryManager.Instance;
+        var inv = GetInventory();
         if (inv == null)
         {
-            InteractionTextField.SetValue(this, "Cửa hàng bán sữa");
+            field.SetValue(this, "Cửa hàng bán sữa");
             return;
         }
 
-        bool hasBottled = bottledMilkSellPrice > 0 && inv.GetAmount(ItemType.BottledMilk) >= bottledMilkBatchSize;
-
+        bool hasBottled = inv.GetAmount(ItemType.BottledMilk) >= milkBatchSize;
         if (hasBottled)
         {
-            InteractionTextField.SetValue(this, $"Bán {bottledMilkBatchSize} BottledMilk (+{bottledMilkBatchSize * bottledMilkSellPrice} Credits)]");
+            field.SetValue(this, $"Bán {milkBatchSize} BottledMilk (+{milkBatchSize * milkSellPrice} Credits)");
         }
         else
         {
-            InteractionTextField.SetValue(this, "Cửa hàng bán sữa (Không có BottledMilk để bán)");
+            field.SetValue(this, "Cửa hàng bán sữa (Không có BottledMilk để bán)");
         }
     }
 
-    [ContextMenu("Test/Sell Milk Now")]
-    public void TestSellMilk()
+    private InventoryManager GetInventory()
     {
-        Interact();
+        if (featureReferences != null && featureReferences.Inventory != null)
+        {
+            return featureReferences.Inventory;
+        }
+
+        return InventoryManager.Instance;
     }
 }

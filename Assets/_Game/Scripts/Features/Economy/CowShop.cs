@@ -1,114 +1,137 @@
-using System.Reflection;
 using UnityEngine;
 
 /// <summary>
-/// Shop mua bò mới vào CowBarn.
-/// Nhấn E để mua 1 con bò (giá 100 Credits).
-/// Mỗi CowBarn có sức chứa tối đa theo cấp CowUpgrade: Cấp 1 → 2, Cấp 2 → 3, Cấp 3 → 4.
+/// Cửa hàng mua bò mới vào chuồng (CowBarn).
+/// Sức chứa tối đa của chuồng dựa theo cấp CowUpgrade (Cấp 1: 2 con, Cấp 2: 3 con, Cấp 3: 4 con).
 /// </summary>
 [DisallowMultipleComponent]
 public class CowShop : Interactable
 {
-    [Header("Cấu hình")]
-    [SerializeField, Min(1)] private int cowPrice = 100;
-    [SerializeField] private GameObject individualCowPrefab;
-    [SerializeField, Min(0)] private int maxCowsPerBarnOverride = 0;
-
+    [Header("Tham chiếu")]
     [SerializeField] private FeatureReferences featureReferences;
+    [SerializeField] private GameObject individualCowPrefab;
+
+    [Header("Cấu hình Shop Bò")]
+    [SerializeField, Min(1)] private int cowPrice = 100; // Cần 100 Credits
+    [SerializeField, Min(0)] private int maxCowsPerBarnOverride = 0;
 
     [Header("Vị trí đặt bò trong chuồng")]
     [SerializeField, Min(0.5f)] private float slotSpacing = 1.2f;
     [SerializeField, Range(1, 12)] private int slotAttempts = 8;
 
-    private static readonly FieldInfo InteractionTextField =
-        typeof(Interactable).GetField("interactionText", BindingFlags.NonPublic | BindingFlags.Instance);
-
     private float hintTimer = 0f;
-    private string cachedText = "";
 
     private void Awake()
     {
         if (featureReferences == null)
+        {
             featureReferences = GetComponentInParent<FeatureReferences>();
+        }
         UpdateHintText();
     }
 
     private void Update()
     {
         hintTimer -= Time.deltaTime;
-        if (hintTimer > 0f) return;
-        hintTimer = 0.25f;
-        UpdateHintText();
+        if (hintTimer <= 0f)
+        {
+            hintTimer = 0.25f;
+            UpdateHintText();
+        }
     }
 
     public override void Interact()
     {
-        InventoryManager inventory = InventoryManager.Instance;
+        var inventory = GetInventory();
         if (inventory == null)
         {
-            Debug.LogWarning("[CowShop] Chưa kết nối được với Inventory.", this);
+            Debug.LogError($"{name}: CowShop chưa kết nối được với Inventory!", this);
             return;
         }
 
         if (individualCowPrefab == null)
         {
-            Debug.LogWarning("[CowShop] Chưa gán IndividualCow prefab vào Inspector!", this);
+            Debug.LogWarning("CowShop: Chưa gán IndividualCow prefab vào Inspector!", this);
             return;
         }
+
+        // Tìm chuồng bò còn chỗ trống
+        var (barnGO, currentCount, maxCount) = FindTargetBarn();
+        if (barnGO == null)
+        {
+            Debug.Log("CowShop: Tất cả chuồng bò đã đầy! Hãy nâng cấp CowBarn để mua thêm bò.", this);
+            return;
+        }
+
+        // Kiểm tra đủ tiền
+        if (inventory.GetAmount(ItemType.Credits) < cowPrice)
+        {
+            Debug.LogWarning($"CowShop: Không đủ Credits để mua bò! Cần {cowPrice} Credits, hiện có {inventory.GetAmount(ItemType.Credits)}.");
+            return;
+        }
+
+        // Trừ tiền và tạo bò mới vào chuồng
+        if (inventory.TryRemove(ItemType.Credits, cowPrice))
+        {
+            SpawnCowInBarn(barnGO);
+            Debug.Log($"CowShop: Đã mua 1 con bò với giá {cowPrice} Credits! Sức chứa chuồng: {currentCount + 1}/{maxCount}.");
+            UpdateHintText();
+        }
+    }
+
+    private void UpdateHintText()
+    {
+        var field = typeof(Interactable).GetField("interactionText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        field?.SetValue(this, BuildCurrentText());
+    }
+
+    private string BuildCurrentText()
+    {
+        var inventory = GetInventory();
+        int credits = inventory != null ? inventory.GetAmount(ItemType.Credits) : 0;
 
         var (barnGO, currentCount, maxCount) = FindTargetBarn();
         if (barnGO == null)
         {
-            Debug.Log("[CowShop] Tất cả chuồng bò đã đầy! Hãy nâng cấp CowBarn để mua thêm bò.", this);
-            return;
+            return $"Mua bò ({cowPrice} Credits) | Chuồng đã đầy!";
         }
 
-        if (inventory.GetAmount(ItemType.Credits) < cowPrice)
+        if (credits < cowPrice)
         {
-            Debug.Log($"[CowShop] Không đủ Credits! Cần {cowPrice} Credits để mua bò. Hiện có: {inventory.GetAmount(ItemType.Credits)}.", this);
-            return;
+            return $"Mua bò: {cowPrice} Credits | Bạn có {credits} Credits | Chuồng: {currentCount}/{maxCount}";
         }
 
-        if (!inventory.TryRemove(ItemType.Credits, cowPrice))
-        {
-            Debug.LogWarning("[CowShop] Không thể trừ Credits.", this);
-            return;
-        }
+        return $"Mua bò ({cowPrice} Credits) | Chuồng: {currentCount}/{maxCount}";
+    }
 
-        GameObject newCow = Object.Instantiate(individualCowPrefab, barnGO.transform);
+    private void SpawnCowInBarn(GameObject barnGO)
+    {
+        GameObject newCow = Instantiate(individualCowPrefab, barnGO.transform);
+
+        // Khởi tạo CowController
         var ctrl = newCow.GetComponent<CowController>();
         if (ctrl == null) ctrl = newCow.AddComponent<CowController>();
         var upgrade = barnGO.GetComponent<CowUpgrade>();
         ctrl.Initialize(barnGO.GetComponent<FeatureReferences>(), upgrade, newCow.GetComponent<CowHealth>());
 
+        // Đặt vị trí trong vùng RoamingArea của chuồng
         var area = barnGO.GetComponentInChildren<RoamingArea>();
         if (area != null)
         {
-            bool placed = false;
-            for (int i = 0; i < slotAttempts && !placed; i++)
+            newCow.transform.position = CalculateSpawnPosition(area, newCow.transform, barnGO);
+
+            var movement = newCow.GetComponent<CowMovement>();
+            if (movement != null)
             {
-                float step = (i + 1) / 2f;
-                float sign = (i % 2 == 1) ? -1f : 1f;
-                float offsetX = sign * step * slotSpacing;
-                Vector3 candidate = area.transform.position + new Vector3(offsetX, 0f, 0f);
-                if (IsPositionFree(candidate, newCow.transform, barnGO))
-                {
-                    newCow.transform.position = candidate;
-                    placed = true;
-                }
+                movement.SetRoamingArea(area);
             }
-            if (!placed)
-                newCow.transform.position = area.transform.position;
         }
         else
         {
             newCow.transform.position = barnGO.transform.position;
         }
 
-        var movement = newCow.GetComponent<CowMovement>();
-        if (movement != null && area != null)
-            movement.SetRoamingArea(area);
-
+        // Đăng ký bệnh cho bò mới
         var health = newCow.GetComponent<CowHealth>();
         if (health != null)
         {
@@ -116,39 +139,35 @@ public class CowShop : Interactable
             if (ctx != null) health.RegisterWith(ctx);
         }
 
+        // Gắn nhãn UI hiển thị trạng thái bệnh
         var healthUI = newCow.GetComponent<CowHealthUI>();
         if (healthUI == null)
-            healthUI = newCow.AddComponent<CowHealthUI>();
-
-        Debug.Log($"[CowShop] Đã mua bò cho {barnGO.name} (-{cowPrice} Credits). Barn: {currentCount + 1}/{maxCount}.", this);
-        UpdateHintText();
+        {
+            newCow.AddComponent<CowHealthUI>();
+        }
     }
 
-    private void UpdateHintText()
+    private Vector3 CalculateSpawnPosition(RoamingArea area, Transform newCowTransform, GameObject barn)
     {
-        if (InteractionTextField == null) return;
-        cachedText = BuildCurrentText();
-        InteractionTextField.SetValue(this, cachedText);
+        for (int i = 0; i < slotAttempts; i++)
+        {
+            float step = (i + 1) / 2f;
+            float sign = (i % 2 == 1) ? -1f : 1f;
+            float offsetX = sign * step * slotSpacing;
+            Vector3 candidate = area.transform.position + new Vector3(offsetX, 0f, 0f);
+
+            if (IsPositionFree(candidate, newCowTransform, barn, area))
+            {
+                return candidate;
+            }
+        }
+
+        return area.transform.position;
     }
 
-    private string BuildCurrentText()
+    private bool IsPositionFree(Vector3 candidate, Transform newCowTransform, GameObject barn, RoamingArea area)
     {
-        InventoryManager inventory = InventoryManager.Instance;
-        int credits = inventory != null ? inventory.GetAmount(ItemType.Credits) : 0;
-
-        var (barnGO, currentCount, maxCount) = FindTargetBarn();
-        if (barnGO == null)
-            return $"Mua bò ({cowPrice} Credits) | Chuồng đã đầy!";
-
-        if (credits < cowPrice)
-            return $"Mua bò: {cowPrice} Credits | Bạn có {credits} Credits | Chuồng: {currentCount}/{maxCount}";
-
-        return $"Mua bò ({cowPrice} Credits) | Chuồng: {currentCount}/{maxCount}";
-    }
-
-    private bool IsPositionFree(Vector3 candidate, Transform newCowTransform, GameObject barn)
-    {
-        // Kiểm tra không trùng bò khác trong chuồng
+        // Kiểm tra khoảng cách với các con bò khác trong chuồng
         foreach (var existing in barn.GetComponentsInChildren<CowController>(true))
         {
             if (existing == null) continue;
@@ -159,8 +178,7 @@ public class CowShop : Interactable
             }
         }
 
-        // Kiểm tra không ra ngoài ranh giới của Chuồng
-        var area = barn.GetComponentInChildren<RoamingArea>();
+        // Kiểm tra không vượt ngoài biên chuồng
         if (area != null)
         {
             float halfWidth = area.WorldBounds.extents.x - 0.35f;
@@ -179,12 +197,13 @@ public class CowShop : Interactable
         var upgrades = FindObjectsByType<CowUpgrade>();
         foreach (var upgrade in upgrades)
         {
-            // IndividualCow also carries CowUpgrade for standalone production.
-            // Only a barn owns a roaming area; never treat a cow as another barn.
+            // Chỉ chuồng bò mới sở hữu RoamingArea
             if (upgrade.GetComponentInChildren<RoamingArea>() == null) continue;
+
             Transform barnRoot = upgrade.transform;
             int currentCount = barnRoot.GetComponentsInChildren<CowController>(true).Length;
             int maxCount = GetMaxCows(upgrade);
+
             if (currentCount < maxCount)
             {
                 return (barnRoot.gameObject, currentCount, maxCount);
@@ -199,5 +218,15 @@ public class CowShop : Interactable
         if (maxCowsPerBarnOverride > 0) return maxCowsPerBarnOverride;
         if (upgrade == null) return 2;
         return upgrade.Capacity;
+    }
+
+    private InventoryManager GetInventory()
+    {
+        if (featureReferences != null && featureReferences.Inventory != null)
+        {
+            return featureReferences.Inventory;
+        }
+
+        return InventoryManager.Instance;
     }
 }
