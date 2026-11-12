@@ -1,158 +1,208 @@
+using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
 public class TowerController : UpgradeTarget
 {
-    [Header("Cấu hình & Data")]
-    [SerializeField] private TowerDefinition definition; // Gán Tower0/1/2/3.asset
+    [SerializeField] private TowerDefinition definition;
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private Transform firePoint;
     [SerializeField] private ProjectilePool projectilePool;
-
-    [Header("Sprites theo 3 cấp")]
+    [Header("Level I / II / III visuals")]
     [SerializeField] private Sprite[] levelSprites = new Sprite[3];
-
-    [Header("Hiệu ứng đặc biệt")]
-    [SerializeField] private float aoeRadius = 0f;        // Pháo: 1.5 ô
-    [SerializeField] private float slowMultiplier = 1f;   // Băng: C1=0.7, C2=0.6, C3=0.5
-    [SerializeField] private float slowDuration = 2.5f;   // Băng: 2.5s
+    [SerializeField] private Sprite[] levelWeaponSprites = new Sprite[3];
+    [SerializeField] private SpriteRenderer weaponRenderer;
+    [SerializeField] private Animator weaponAnimator;
+    [Header("Special effects")]
+    [SerializeField] private float aoeRadius;
+    [SerializeField] private float slowMultiplier = 1;
+    [SerializeField] private float slowDuration = 2.5f;
 
     public TowerDefinition Definition => definition;
     public int CurrentLevel { get; private set; } = 1;
+    public int CurrentDamage => definition != null ? definition.GetDamage(CurrentLevel) : 0;
+    public float CurrentRange => definition != null ? definition.GetRange(CurrentLevel) : 0;
+    public bool IsFiringAnimation => weaponAnimator != null && weaponAnimator.isActiveAndEnabled &&
+        weaponAnimator.GetCurrentAnimatorStateInfo(0).IsName("Fire" + CurrentLevel);
+    public event Action<TowerController> OnShot;
 
-    private float shootCooldownTimer = 0f;
+    private float shootCooldownTimer;
     private IEnemyTarget currentTarget;
     private DefenseSceneContext sceneContext;
+    private bool shotAnimationStarted;
+    private LineRenderer rangeIndicator;
+    private Material rangeMaterial;
+    private float firingAnimationSpeed = 1;
 
-    // Được gọi khi slot sinh tháp
     public void SetContext(DefenseSceneContext context)
     {
         sceneContext = context;
+        currentTarget = null;
+        StopFiringAnimation();
     }
 
     private void Awake()
     {
-        // Tự động tìm ProjectilePool ở object con nếu trong Inspector quên kéo thả
-        if (projectilePool == null)
-        {
-            projectilePool = GetComponentInChildren<ProjectilePool>();
-        }
-
-        // Tự động gán firePoint nếu quên kéo
-        if (firePoint == null)
-        {
-            firePoint = transform;
-        }
+        if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+        if (projectilePool == null) projectilePool = GetComponentInChildren<ProjectilePool>();
+        if (weaponAnimator == null) weaponAnimator = GetComponentInChildren<Animator>();
+        if (weaponRenderer == null && weaponAnimator != null) weaponRenderer = weaponAnimator.GetComponent<SpriteRenderer>();
+        if (firePoint == null) firePoint = weaponRenderer != null ? weaponRenderer.transform : transform;
+        ApplyLevel(CurrentLevel);
     }
 
-    private void Start()
-    {
-        ApplyLevel(1);
-    }
+    // Preserve a level assigned by Building before Start.
+    private void Start() { ApplyLevel(CurrentLevel); }
 
-    // Tuân thủ hợp đồng nhóm: ApplyLevel thiết lập cấp tuyệt đối 1..3
     public override void ApplyLevel(int level)
     {
-        base.ApplyLevel(level);
         if (level < 1 || level > 3) return;
-
+        base.ApplyLevel(level);
         CurrentLevel = level;
-
-        // Cập nhật Sprite theo cấp độ nếu có
-        if (spriteRenderer != null && levelSprites != null && level - 1 < levelSprites.Length && levelSprites[level - 1] != null)
+        if (spriteRenderer != null && levelSprites != null && levelSprites.Length >= level && levelSprites[level - 1] != null)
         {
             spriteRenderer.sprite = levelSprites[level - 1];
+            if (weaponRenderer != null)
+                weaponRenderer.transform.localPosition = new Vector3(0, spriteRenderer.sprite.bounds.max.y - .35f, 0);
         }
-
-        // Cập nhật chỉ số theo cấp từ bảng cân bằng
-        if (definition.kind == TowerDefinition.Kind.Ice)
-        {
-            // Băng: Làm chậm 30% / 40% / 50% tương ứng multiplier = 0.7, 0.6, 0.5
-            slowMultiplier = level == 1 ? 0.7f : level == 2 ? 0.6f : 0.5f;
-            slowDuration = level == 1 ? 2.0f : level == 2 ? 2.5f : 3.0f;
-        }
-        else if (definition.kind == TowerDefinition.Kind.Cannon)
-        {
-            aoeRadius = level == 1 ? 1.5f : level == 2 ? 1.8f : 2.2f;
-        }
+        aoeRadius = definition != null && definition.kind == TowerDefinition.Kind.Cannon
+            ? (level == 1 ? 1.5f : level == 2 ? 1.8f : 2.2f) : 0;
+        slowMultiplier = definition != null && definition.kind == TowerDefinition.Kind.Ice ? 1 - .1f * (level + 2) : 1;
+        slowDuration = level == 1 ? 2 : level == 2 ? 2.5f : 3;
+        StopFiringAnimation();
+        firingAnimationSpeed = FiringAnimationSpeed();
+        RefreshRangeIndicator();
     }
 
     private void Update()
     {
-        shootCooldownTimer -= Time.deltaTime;
-
-        // Kiểm tra mục tiêu hiện tại còn hợp lệ không
-        if (currentTarget == null || !currentTarget.IsAlive || currentTarget.TargetTransform == null ||
-            Vector2.Distance(transform.position, currentTarget.TargetTransform.position) > definition.range)
+        bool canAct = definition != null && sceneContext != null && sceneContext.Game != null &&
+            (sceneContext.Game.State == GameState.Preparing || sceneContext.Game.State == GameState.Fighting);
+        if (weaponAnimator != null) weaponAnimator.speed = canAct ? firingAnimationSpeed : 0;
+        if (!canAct || Time.deltaTime <= 0) return;
+        shootCooldownTimer = Mathf.Max(0, shootCooldownTimer - Time.deltaTime);
+        if (!CanTarget(currentTarget)) currentTarget = FindBestTarget();
+        if (currentTarget == null)
         {
-            currentTarget = FindBestTarget();
+            // Let an already released shot finish its recoil animation.
+            if (shotAnimationStarted && !IsFiringAnimation) StopFiringAnimation();
+            return;
         }
-
-        // Bắn khi đã hồi chiêu và có mục tiêu
-        if (currentTarget != null && shootCooldownTimer <= 0f)
+        if (weaponRenderer != null)
         {
-            Shoot();
-            shootCooldownTimer = 1f / definition.shotsPerSecond;
+            Vector3 direction = currentTarget.TargetTransform.position - weaponRenderer.transform.position;
+            weaponRenderer.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90);
         }
+        if (shootCooldownTimer <= 0 && Shoot()) shootCooldownTimer = 1 / Mathf.Max(.01f, definition.shotsPerSecond);
+    }
+
+    private bool CanTarget(IEnemyTarget target)
+    {
+        if (target == null || (target is UnityEngine.Object obj && obj == null) || !target.IsAlive || target.TargetTransform == null) return false;
+        return (!target.IsFlying || definition.canTargetFlying) &&
+            ((Vector2)(target.TargetTransform.position - transform.position)).sqrMagnitude <= CurrentRange * CurrentRange;
     }
 
     private IEnemyTarget FindBestTarget()
     {
-        if (sceneContext == null || sceneContext.Enemies == null) return null;
-
         IEnemyTarget best = null;
-        float shortestDist = float.MaxValue;
-
-        var enemies = sceneContext.Enemies;
-        for (int i = 0; i < enemies.Count; i++)
+        float shortest = float.MaxValue;
+        foreach (var enemy in sceneContext.Enemies)
         {
-            var e = enemies[i];
-            if (e == null || !e.IsAlive || e.TargetTransform == null) continue;
-
-            // Nếu tháp không bắn được mục tiêu bay (Ruồi) mà quái đang bay thì bỏ qua
-            if (e.IsFlying && !definition.canTargetFlying) continue;
-
-            float dist = Vector2.Distance(transform.position, e.TargetTransform.position);
-            if (dist <= definition.range)
-            {
-                // ƯU TIÊN ĐẶC BIỆT: Nếu là Ruồi (quái bay) -> ưu tiên bắn trước để bảo vệ bò!
-                if (e.IsFlying)
-                {
-                    return e;
-                }
-
-                if (dist < shortestDist)
-                {
-                    shortestDist = dist;
-                    best = e;
-                }
-            }
+            if (!CanTarget(enemy)) continue;
+            float score = ((Vector2)(enemy.TargetTransform.position - transform.position)).sqrMagnitude;
+            if (enemy.IsFlying) score -= CurrentRange * CurrentRange + 1;
+            if (score < shortest) { shortest = score; best = enemy; }
         }
-
         return best;
     }
 
-    private void Shoot()
+    private bool Shoot()
     {
-        if (projectilePool == null || currentTarget == null) return;
-
-        Projectile bullet = projectilePool.Get();
-        bullet.transform.position = firePoint != null ? firePoint.position : transform.position;
-
-        int currentDamage = (definition.damage != null && CurrentLevel - 1 < definition.damage.Length)
-            ? definition.damage[CurrentLevel - 1]
-            : 10;
-
-        bullet.Launch(currentTarget, currentDamage, aoeRadius, slowMultiplier, slowDuration, projectilePool.Release);
-        Debug.Log($"[{name}] Đang bắn đạn vào: {currentTarget.TargetTransform.name}");
+        if (projectilePool == null || !CanTarget(currentTarget)) return false;
+        var bullet = projectilePool.Get();
+        bullet.transform.position = MuzzlePosition();
+        bullet.Launch(currentTarget, CurrentDamage, aoeRadius, slowMultiplier, slowDuration, projectilePool.Release, definition.canTargetFlying);
+        if (weaponAnimator != null && weaponAnimator.HasState(0, Animator.StringToHash("Base Layer.Fire" + CurrentLevel)))
+        {
+            weaponAnimator.Play("Fire" + CurrentLevel, 0, 0);
+            weaponAnimator.Update(0);
+            shotAnimationStarted = true;
+        }
+        OnShot?.Invoke(this);
+        return true;
     }
 
-    private void OnDrawGizmosSelected()
+    private Vector3 MuzzlePosition()
     {
-        if (definition != null)
+        if (weaponRenderer == null || firePoint != weaponRenderer.transform ||
+            levelWeaponSprites == null || levelWeaponSprites.Length < CurrentLevel)
+            return firePoint.position;
+        var idle = levelWeaponSprites[CurrentLevel - 1];
+        return idle != null
+            ? weaponRenderer.transform.TransformPoint(new Vector3(idle.bounds.center.x, idle.bounds.max.y, 0))
+            : firePoint.position;
+    }
+
+    private float FiringAnimationSpeed()
+    {
+        if (definition == null || weaponAnimator == null || weaponAnimator.runtimeAnimatorController == null) return 1;
+        foreach (var clip in weaponAnimator.runtimeAnimatorController.animationClips)
+            if (clip.name == definition.kind + "Fire" + CurrentLevel)
+                return Mathf.Max(1, clip.length * definition.shotsPerSecond);
+        return 1;
+    }
+
+    private void StopFiringAnimation()
+    {
+        shotAnimationStarted = false;
+        if (weaponAnimator != null && weaponAnimator.runtimeAnimatorController != null &&
+            weaponAnimator.HasState(0, Animator.StringToHash("Base Layer.Idle" + CurrentLevel)))
         {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(transform.position, definition.range);
+            weaponAnimator.Play("Idle" + CurrentLevel, 0, 0);
+            weaponAnimator.Update(0);
+        }
+        if (weaponRenderer != null && levelWeaponSprites != null && levelWeaponSprites.Length >= CurrentLevel)
+        {
+            var sprite = levelWeaponSprites[CurrentLevel - 1];
+            weaponRenderer.sprite = sprite;
+            if (sprite != null)
+            {
+                float pixelsPerUnit = spriteRenderer != null && spriteRenderer.sprite != null ? spriteRenderer.sprite.pixelsPerUnit : 50;
+                weaponRenderer.transform.localScale = Vector3.one * (sprite.pixelsPerUnit / pixelsPerUnit);
+            }
         }
     }
+
+    public void SetRangeVisible(bool visible)
+    {
+        if (visible && rangeIndicator == null)
+        {
+            var go = new GameObject("AttackRange");
+            go.transform.SetParent(transform, false);
+            rangeIndicator = go.AddComponent<LineRenderer>();
+            rangeMaterial = new Material(Shader.Find("Sprites/Default"));
+            rangeIndicator.sharedMaterial = rangeMaterial;
+            rangeIndicator.useWorldSpace = true;
+            rangeIndicator.loop = true;
+            rangeIndicator.widthMultiplier = .04f;
+            rangeIndicator.positionCount = 96;
+            rangeIndicator.startColor = rangeIndicator.endColor = new Color(.4f, 1, .7f, .8f);
+            rangeIndicator.sortingOrder = 1500;
+        }
+        if (rangeIndicator != null) { rangeIndicator.enabled = visible; RefreshRangeIndicator(); }
+    }
+
+    private void RefreshRangeIndicator()
+    {
+        if (rangeIndicator == null || !rangeIndicator.enabled) return;
+        for (int i = 0; i < rangeIndicator.positionCount; i++)
+        {
+            float angle = i * Mathf.PI * 2 / rangeIndicator.positionCount;
+            rangeIndicator.SetPosition(i, transform.position + new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0) * CurrentRange);
+        }
+    }
+
+    private void OnDestroy() { if (rangeMaterial != null) Destroy(rangeMaterial); }
+    private void OnDrawGizmosSelected() { Gizmos.color = Color.cyan; Gizmos.DrawWireSphere(transform.position, CurrentRange); }
 }

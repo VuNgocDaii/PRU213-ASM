@@ -220,6 +220,7 @@ public class BuildingController : MonoBehaviour
             GameObject targetToDestroy = instance != null ? instance : (defenseSlot != null ? defenseSlot.Occupant : null);
             if (targetToDestroy != null)
             {
+                if (defenseSlot != null) defenseSlot.ReleaseOccupant(targetToDestroy);
                 targetToDestroy.SetActive(false);
                 Destroy(targetToDestroy);
             }

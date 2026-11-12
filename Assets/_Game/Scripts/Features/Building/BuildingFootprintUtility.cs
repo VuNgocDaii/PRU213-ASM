@@ -15,6 +15,8 @@ public static class BuildingFootprintUtility
             if (hit == null) continue;
             // Triggers like zones, slot interaction areas, roaming areas do not block building footprint
             if (hit.isTrigger) continue;
+            // The player must approach a pad to use it; their body is not a placement obstacle.
+            if (hit.GetComponentInParent<PlayerMovement>() != null) continue;
             // Ignore objects under the current slot or being inspected
             if (ignoreRoot != null && (hit.transform == ignoreRoot || hit.transform.IsChildOf(ignoreRoot))) continue;
 

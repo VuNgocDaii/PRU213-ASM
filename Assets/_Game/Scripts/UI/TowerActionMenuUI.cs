@@ -6,6 +6,7 @@ public class TowerActionMenuUI : MonoBehaviour
 {
     [SerializeField] private GameObject menuPanel;
     [SerializeField] private TextMeshProUGUI txtTitle;
+    [SerializeField] private TextMeshProUGUI txtStats;
     [SerializeField] private Button btnUpgrade;
     [SerializeField] private TextMeshProUGUI txtUpgradeCost;
     [SerializeField] private Button btnSell;
@@ -25,6 +26,7 @@ public class TowerActionMenuUI : MonoBehaviour
 
     public void OpenMenu(TowerController tower, DefenseBuildingSlot slot)
     {
+        if (selectedTower != null) selectedTower.SetRangeVisible(false);
         selectedTower = tower;
         selectedSlot = slot;
 
@@ -35,11 +37,13 @@ public class TowerActionMenuUI : MonoBehaviour
         }
 
         menuPanel.SetActive(true);
+        selectedTower.SetRangeVisible(true);
         RefreshUI();
     }
 
     public void CloseMenu()
     {
+        if (selectedTower != null) selectedTower.SetRangeVisible(false);
         menuPanel.SetActive(false);
         selectedTower = null;
         selectedSlot = null;
@@ -51,7 +55,18 @@ public class TowerActionMenuUI : MonoBehaviour
 
         TowerDefinition def = selectedTower.Definition;
         int lvl = selectedTower.CurrentLevel;
-        txtTitle.text = $"{def.kind} (Cấp {lvl})";
+        txtTitle.text = $"{def.kind} {TowerDefinition.LevelLabel(lvl)}";
+        if (txtStats != null)
+        {
+            string damage = $"Sát thương: {selectedTower.CurrentDamage}";
+            string range = $"Tầm bắn: {selectedTower.CurrentRange:0.##}";
+            if (lvl < 3)
+            {
+                damage += $" → {def.GetDamage(lvl + 1)}";
+                range += $" → {def.GetRange(lvl + 1):0.##}";
+            }
+            txtStats.text = damage + "\n" + range;
+        }
 
         // Kiểm tra điều kiện nâng cấp
         int castleLvl = context.Progress.CurrentLevel;
@@ -71,36 +86,27 @@ public class TowerActionMenuUI : MonoBehaviour
             int upgradePrice = def.upgradePrices[lvl - 1];
             bool hasMoney = context.Inventory.GetAmount(ItemType.Credits) >= upgradePrice;
             btnUpgrade.interactable = hasMoney;
-            txtUpgradeCost.text = $"{upgradePrice} C";
+            txtUpgradeCost.text = $"Lên {TowerDefinition.LevelLabel(lvl + 1)} · {upgradePrice} C";
         }
 
         // Bán tháp (hoàn lại 60% tiền)
-        int refund = Mathf.RoundToInt(def.buildPrice * 0.6f);
-        txtSellRefund.text = $"+{refund} C";
+        var building = selectedSlot != null ? selectedSlot.GetComponent<BuildingController>() : null;
+        int refund = building != null ? building.CalculateRefund() : Mathf.RoundToInt(def.buildPrice * 0.6f);
+        txtSellRefund.text = $"Bán · +{refund} C";
     }
 
     private void OnUpgradeClicked()
     {
-        if (selectedTower == null || context == null) return;
-
-        int lvl = selectedTower.CurrentLevel;
-        int price = selectedTower.Definition.upgradePrices[lvl - 1];
-
-        if (context.Inventory.TryRemove(ItemType.Credits, price))
-        {
-            selectedTower.ApplyLevel(lvl + 1);
-            RefreshUI();
-        }
+        if (selectedTower == null || context == null || selectedSlot == null) return;
+        var upgrade = selectedSlot.GetComponent<BuildingUpgradeController>();
+        if (upgrade != null) upgrade.TryUpgrade();
+        RefreshUI();
     }
 
     private void OnSellClicked()
     {
-        if (selectedTower == null || context == null) return;
-
-        int refund = Mathf.RoundToInt(selectedTower.Definition.buildPrice * 0.6f);
-        context.Inventory.Add(ItemType.Credits, refund);
-
-        Destroy(selectedTower.gameObject);
-        CloseMenu();
+        if (selectedTower == null || context == null || selectedSlot == null) return;
+        var building = selectedSlot.GetComponent<BuildingController>();
+        if (building != null && building.TrySell(out _)) CloseMenu();
     }
 }

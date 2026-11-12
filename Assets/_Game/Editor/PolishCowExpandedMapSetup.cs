@@ -117,6 +117,7 @@ public static class PolishCowExpandedMapSetup
         MakeBoundaries(map);
         MakeArtwork(map, zones);
         MakeSlots(zones, references, progress, scene);
+        PolishCowFixedBuildLayout.ApplyToScene(scene);
         MakeRoutes(zones);
         var follow = Add<ExpandedMapCamera>(camera.gameObject);
         Set(follow, "target", player.transform); SetArray(follow, "zones", zones);
@@ -194,9 +195,9 @@ public static class PolishCowExpandedMapSetup
 
     private static void MakeArtwork(Transform map, MapZone[] zones)
     {
-        Sprite tree = SpriteAsset("Tree", "Objects/Basic_Grass_Biom_things.png", 0, 0, 16, 32, true);
-        Sprite shrub = SpriteAsset("Shrub", "Objects/Basic_Grass_Biom_things.png", 48, 16, 16, 16, true);
-        Sprite flower = SpriteAsset("Flowers", "Objects/Basic_Grass_Biom_things.png", 80, 16, 16, 16, true);
+        Sprite tree = SpriteAsset("Tree", "Objects/Basic_Grass_Biom_things.png", 19, 0, 26, 33, true);
+        Sprite shrub = SpriteAsset("Shrub", "Objects/Basic_Grass_Biom_things.png", 0, 47, 33, 18, true);
+        Sprite flower = SpriteAsset("Flowers", "Objects/Basic_Grass_Biom_things.png", 113, 36, 13, 11, true);
         Sprite house = SpriteAsset("FarmsteadHouse", "Objects/Free_Chicken_House.png", 0, 0, 48, 48, true);
         Sprite fence = SpriteAsset("Fence", "Tilesets/Fences.png", 16, 0, 16, 16, true);
         Transform central = zones[0].transform.Find("Content");
@@ -374,7 +375,8 @@ public static class PolishCowExpandedMapSetup
     {
         string path = Data + "/Sprites/" + name + ".asset";
         Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-        if (sprite != null && Mathf.Approximately(sprite.pivot.y, bottomPivot ? 0 : height * 0.5f)) return sprite;
+        if (sprite != null && sprite.rect == new Rect(x, sprite.texture.height-top-height, width, height) &&
+            Mathf.Approximately(sprite.pivot.y, bottomPivot ? 0 : height * 0.5f)) return sprite;
         string source = Art + texturePath;
         var importer = (TextureImporter)AssetImporter.GetAtPath(source);
         if (importer == null) throw new Exception("Missing texture " + source);
@@ -440,14 +442,14 @@ public static class PolishCowExpandedMapSetup
         Require(Collect<CastleProgress>(scene).Length == 1 && Collect<GameManager>(scene).Length == 1,"One shared castle/game foundation");
         Require(Collect<EnemyRoute>(scene).Length == 6,"Six waypoint routes");
         var slots = Collect<DefenseBuildingSlot>(scene);
-        Require(slots.Count(s => s.SlotKind == DefenseBuildingSlot.Kind.Tower) == 12,"12 tower slots");
-        Require(slots.Count(s => s.SlotKind == DefenseBuildingSlot.Kind.Cow) == 8,"8 cow slots");
-        Require(slots.Count(s => s.SlotKind == DefenseBuildingSlot.Kind.Machine) == 4,"4 machine slots");
+        Require(slots.Count(s => s.SlotKind == DefenseBuildingSlot.Kind.Tower) == 22,"22 tower slots");
+        Require(slots.Count(s => s.SlotKind == DefenseBuildingSlot.Kind.Cow) == 1,"One shared barn");
+        Require(slots.Count(s => s.SlotKind == DefenseBuildingSlot.Kind.Machine) == 1,"One existing processor");
         Require(Collect<PlayerMovement>(scene).Length == 1 && Collect<InventoryManager>(scene).Length == 1,"One player and inventory");
         var waves = AssetDatabase.FindAssets("t:WaveDefinition",new[]{Data});
         Require(waves.Length == 10,"10 configured waves");
         Directory.CreateDirectory("Logs");
-        File.WriteAllText("Logs/ExpandedMapSetup.txt","PASS: Sprout Lands map 64x48; 5 zones; 12/8/4 slots; 6 routes; 10 waves; one player/inventory/game foundation.\n");
+        File.WriteAllText("Logs/ExpandedMapSetup.txt","PASS: Sprout Lands map 64x48; 5 zones; 22 tower pads, one barn, one processor; 6 routes; 10 waves; one player/inventory/game foundation.\n");
         Debug.Log("PASS Expanded map foundation verification.");
     }
     private static void Require(bool condition, string message) { if (!condition) throw new Exception("Verify failed: " + message); }

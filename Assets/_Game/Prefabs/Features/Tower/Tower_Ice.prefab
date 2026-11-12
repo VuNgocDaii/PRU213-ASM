@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 877001812452642644}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.03, y: 0.87, z: 0}
+  m_LocalPosition: {x: 0, y: 0.63, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -8959992846417247228, guid: a46603f49ff1f33479490b9c64081aa1, type: 3}
+  m_Sprite: {fileID: 76359066163611204, guid: 215c2d1e37821454a8b230dc84990394, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -103,7 +103,7 @@ Animator:
   m_GameObject: {fileID: 877001812452642644}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 804f5991c2eed424a93f1848c4314425, type: 2}
+  m_Controller: {fileID: 9100000, guid: 1d99774e4b171f6469735577d3ffb775, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -223,6 +223,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a8116962444e2844aaaa639ab7c1757, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FeatureReferences
+  inventory: {fileID: 0}
 --- !u!114 &3368918741566516334
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -236,13 +237,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerController
   definition: {fileID: 11400000, guid: 6c58c08e36f06f34084cc36904e26228, type: 2}
-  spriteRenderer: {fileID: 0}
+  spriteRenderer: {fileID: 5139339538530016381}
   firePoint: {fileID: 5915645844150212540}
-  projectilePool: {fileID: 0}
+  projectilePool: {fileID: 3872984895826361730}
   levelSprites:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 6201115216396246476, guid: 74e379f67c3c4e54d80030d2ae73a4e7, type: 3}
+  - {fileID: -929129073, guid: 74e379f67c3c4e54d80030d2ae73a4e7, type: 3}
+  - {fileID: 488161687, guid: 74e379f67c3c4e54d80030d2ae73a4e7, type: 3}
+  levelWeaponSprites:
+  - {fileID: 76359066163611204, guid: 215c2d1e37821454a8b230dc84990394, type: 3}
+  - {fileID: 1935154679174888125, guid: e517160d8ee2c7447925a855b6a9e0c3, type: 3}
+  - {fileID: -8959992846417247228, guid: a46603f49ff1f33479490b9c64081aa1, type: 3}
+  weaponRenderer: {fileID: 6055287827023652424}
+  weaponAnimator: {fileID: 2247299478888862099}
   aoeRadius: 0
   slowMultiplier: 1
   slowDuration: 2.5

@@ -79,7 +79,7 @@ public class CowShop : Interactable
         var ctrl = newCow.GetComponent<CowController>();
         if (ctrl == null) ctrl = newCow.AddComponent<CowController>();
         var upgrade = barnGO.GetComponent<CowUpgrade>();
-        ctrl.Initialize(featureReferences, upgrade);
+        ctrl.Initialize(barnGO.GetComponent<FeatureReferences>(), upgrade, newCow.GetComponent<CowHealth>());
 
         var area = barnGO.GetComponentInChildren<RoamingArea>();
         if (area != null)
@@ -176,10 +176,13 @@ public class CowShop : Interactable
 
     private (GameObject barn, int currentCount, int maxCount) FindTargetBarn()
     {
-        var upgrades = FindObjectsByType<CowUpgrade>(FindObjectsInactive.Include);
+        var upgrades = FindObjectsByType<CowUpgrade>();
         foreach (var upgrade in upgrades)
         {
-            Transform barnRoot = upgrade.transform.parent != null ? upgrade.transform.parent : upgrade.transform;
+            // IndividualCow also carries CowUpgrade for standalone production.
+            // Only a barn owns a roaming area; never treat a cow as another barn.
+            if (upgrade.GetComponentInChildren<RoamingArea>() == null) continue;
+            Transform barnRoot = upgrade.transform;
             int currentCount = barnRoot.GetComponentsInChildren<CowController>(true).Length;
             int maxCount = GetMaxCows(upgrade);
             if (currentCount < maxCount)
@@ -195,6 +198,6 @@ public class CowShop : Interactable
     {
         if (maxCowsPerBarnOverride > 0) return maxCowsPerBarnOverride;
         if (upgrade == null) return 2;
-        return 1 + upgrade.CurrentLevel;
+        return upgrade.Capacity;
     }
 }

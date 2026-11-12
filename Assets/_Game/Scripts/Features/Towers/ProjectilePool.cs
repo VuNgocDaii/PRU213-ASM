@@ -12,7 +12,7 @@ public class ProjectilePool : MonoBehaviour
     {
         for (int i = 0; i < initialCapacity; i++)
         {
-            CreateNewInstance();
+            pool.Enqueue(CreateNewInstance());
         }
     }
 
@@ -20,7 +20,6 @@ public class ProjectilePool : MonoBehaviour
     {
         Projectile p = Instantiate(projectilePrefab, transform);
         p.gameObject.SetActive(false);
-        pool.Enqueue(p);
         return p;
     }
 

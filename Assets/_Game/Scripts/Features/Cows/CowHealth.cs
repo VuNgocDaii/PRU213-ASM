@@ -123,6 +123,14 @@ public class CowHealth : MonoBehaviour, ICowDiseaseTarget
     // --- Context Registration ---
     private DefenseSceneContext registeredContext;
 
+    private void OnEnable()
+    {
+        var context = FindAnyObjectByType<DefenseSceneContext>();
+        if (context != null) RegisterWith(context);
+    }
+
+    private void OnDisable() { Unregister(); }
+
     public void RegisterWith(DefenseSceneContext context)
     {
         if (registeredContext == context) return;

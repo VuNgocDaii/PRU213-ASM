@@ -10,6 +10,8 @@ public class CowUpgrade : UpgradeTarget
     [SerializeField, Min(1)] private int feedCost = 1;
 
     public int CurrentLevel => currentLevel;
+    public int Capacity => GetCapacityForLevel(currentLevel);
+    public static int GetCapacityForLevel(int level) => Mathf.Clamp(level, 1, 3) + 1;
     public int FeedCost => feedCost;
 
     public float ProductionDuration => GetDurationForLevel(currentLevel);

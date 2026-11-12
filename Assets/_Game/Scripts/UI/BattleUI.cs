@@ -39,6 +39,7 @@ public class BattleUI : MonoBehaviour
 
         if (btnResume != null)
             btnResume.onClick.AddListener(() => TogglePause(false));
+        if (btnRestart != null) btnRestart.onClick.AddListener(Restart);
     }
 
     private void OnDestroy()
@@ -66,8 +67,15 @@ public class BattleUI : MonoBehaviour
     private void TogglePause(bool pause)
     {
         if (context == null || context.Game == null) return;
+        if (context.Game.State == GameState.Won || context.Game.State == GameState.Lost) return;
         context.Game.SetPaused(pause);
         if (pausePanel != null) pausePanel.SetActive(pause);
+    }
+
+    private void Restart()
+    {
+        Time.timeScale = 1f;
+        UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
     }
 
     private void ShowLevelUpBanner(int newLevel)
@@ -87,6 +95,7 @@ public class BattleUI : MonoBehaviour
 
     private void HandleGameOver(bool won)
     {
+        if (pausePanel != null) pausePanel.SetActive(false);
         if (gameOverPanel == null) return;
 
         gameOverPanel.SetActive(true);

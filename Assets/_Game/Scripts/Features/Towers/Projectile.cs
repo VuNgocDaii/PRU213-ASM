@@ -22,6 +22,7 @@ public class Projectile : MonoBehaviour
     private float slowDuration;
     private Action<Projectile> returnToPool;
     private bool isExploding = false;
+    private bool canTargetFlying = true;
 
     private void Awake()
     {
@@ -32,10 +33,10 @@ public class Projectile : MonoBehaviour
         if (spriteRenderer != null) spriteRenderer.sortingOrder = 100;
     }
 
-    public void Launch(IEnemyTarget enemyTarget, int dmg, float aoe, float slowMult, float slowTime, Action<Projectile> onHit)
+    public void Launch(IEnemyTarget enemyTarget, int dmg, float aoe, float slowMult, float slowTime, Action<Projectile> onHit, bool targetFlying = true)
     {
         target = enemyTarget;
-        lastTargetPos = (enemyTarget != null && enemyTarget.TargetTransform != null)
+        lastTargetPos = IsTargetAlive(enemyTarget)
             ? enemyTarget.TargetTransform.position
             : transform.position;
         damage = dmg;
@@ -44,6 +45,9 @@ public class Projectile : MonoBehaviour
         slowDuration = slowTime;
         returnToPool = onHit;
         isExploding = false;
+        canTargetFlying = targetFlying;
+        CancelInvoke(nameof(Recycle));
+        gameObject.SetActive(true);
 
         // Bật lại animation bay nếu có
         if (animator != null && !string.IsNullOrEmpty(flyAnimState))
@@ -51,15 +55,15 @@ public class Projectile : MonoBehaviour
             animator.Play(flyAnimState, 0, 0f);
         }
 
-        gameObject.SetActive(true);
     }
 
     private void Update()
     {
         // Nếu đạn đang nổ thì đứng yên, không bay tiếp
         if (isExploding) return;
+        if (Time.deltaTime <= 0f) return;
 
-        if (target != null && target.IsAlive && target.TargetTransform != null)
+        if (IsTargetAlive(target))
         {
             lastTargetPos = target.TargetTransform.position;
         }
@@ -91,21 +95,23 @@ public class Projectile : MonoBehaviour
         if (aoeRadius > 0f)
         {
             Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, aoeRadius);
+            var hit = new System.Collections.Generic.HashSet<IEnemyTarget>();
             foreach (var col in colliders)
             {
-                if (col.TryGetComponent<IDamageable>(out var dmgTarget))
+                var enemy = col.GetComponentInParent<IEnemyTarget>();
+                if (enemy != null && enemy.IsAlive && (!enemy.IsFlying || canTargetFlying) && hit.Add(enemy))
                 {
-                    dmgTarget.TakeDamage(damage);
+                    enemy.TakeDamage(damage);
                 }
             }
         }
         else
         {
-            if (target != null && target.IsAlive)
+            if (IsTargetAlive(target))
             {
                 target.TakeDamage(damage);
 
-                if (slowMultiplier < 1f && target is ISlowable slowable)
+                if (slowMultiplier < 1f && IsTargetAlive(target) && target is ISlowable slowable)
                 {
                     slowable.ApplySlow(slowMultiplier, slowDuration);
                 }
@@ -128,4 +134,7 @@ public class Projectile : MonoBehaviour
     {
         returnToPool?.Invoke(this);
     }
+
+    private static bool IsTargetAlive(IEnemyTarget value) => value != null &&
+        !(value is UnityEngine.Object obj && obj == null) && value.IsAlive && value.TargetTransform != null;
 }

@@ -16,53 +16,45 @@ MonoBehaviour:
   - id: tower_arrow
     displayName: "Th\xE1p Cung"
     slotKind: 0
-    prefab: {fileID: 997872435924178043, guid: 380540aee163d91459942e858606fdfa, type: 3}
+    prefab: {fileID: 6492734537270475580, guid: b4a4fa5779368dc40b2235591f9f33e2, type: 3}
     buildPrice: 80
     unlockCastleLevel: 1
     footprintSize: {x: 1, y: 1}
-    upgradePrices:
-    - 60
-    - 120
-    refundRatio: 0.5
+    upgradePrices: 3c00000078000000i
+    refundRatio: 0.6
     icon: {fileID: 0}
     description: "B\u1EAFn t\xEAn nhanh, nh\u1EAFm qu\xE1i bay v\xE0 m\u1EB7t \u0111\u1EA5t."
   - id: tower_cannon
     displayName: "Th\xE1p Ph\xE1o"
     slotKind: 0
-    prefab: {fileID: 997872435924178043, guid: 380540aee163d91459942e858606fdfa, type: 3}
+    prefab: {fileID: 8765611281479734723, guid: d212ec626953f9a448d838e04cbae4b9, type: 3}
     buildPrice: 150
     unlockCastleLevel: 2
     footprintSize: {x: 1.2, y: 1.2}
-    upgradePrices:
-    - 100
-    - 180
-    refundRatio: 0.5
+    upgradePrices: 64000000b4000000i
+    refundRatio: 0.6
     icon: {fileID: 0}
     description: "B\u1EAFn \u0111\u1EA1n ph\xE1o n\u1ED5 s\xE1t th\u01B0\u01A1ng di\u1EC7n r\u1ED9ng."
   - id: tower_ice
     displayName: "Th\xE1p B\u0103ng"
     slotKind: 0
-    prefab: {fileID: 997872435924178043, guid: 380540aee163d91459942e858606fdfa, type: 3}
+    prefab: {fileID: 1519197084176119325, guid: b59ff1ddd6d473b4fa7c7166e8f5076d, type: 3}
     buildPrice: 120
     unlockCastleLevel: 2
     footprintSize: {x: 1.2, y: 1.2}
-    upgradePrices:
-    - 90
-    - 150
-    refundRatio: 0.5
+    upgradePrices: 5a00000096000000i
+    refundRatio: 0.6
     icon: {fileID: 0}
     description: "B\u1EAFn tia b\u0103ng l\xE0m ch\u1EADm t\u1ED1c \u0111\u1ED9 qu\xE1i."
   - id: tower_sniper
     displayName: "Th\xE1p T\u1EC9a"
     slotKind: 0
-    prefab: {fileID: 997872435924178043, guid: 380540aee163d91459942e858606fdfa, type: 3}
+    prefab: {fileID: 5633657124888656524, guid: 7795bbcd34f72f64f82df56f25a3434b, type: 3}
     buildPrice: 200
     unlockCastleLevel: 3
     footprintSize: {x: 1, y: 1}
-    upgradePrices:
-    - 140
-    - 240
-    refundRatio: 0.5
+    upgradePrices: 8c000000f0000000i
+    refundRatio: 0.6
     icon: {fileID: 0}
     description: "T\u1EA7m b\u1EAFn xa, s\xE1t th\u01B0\u01A1ng ch\xED m\u1EA1ng c\u1EF1c cao."
   - id: cow_barn
@@ -72,9 +64,7 @@ MonoBehaviour:
     buildPrice: 150
     unlockCastleLevel: 1
     footprintSize: {x: 2.5, y: 2}
-    upgradePrices:
-    - 120
-    - 280
+    upgradePrices: 7800000018010000i
     refundRatio: 0.5
     icon: {fileID: 0}
     description: "Nu\xF4i b\xF2 cho s\u1EEFa t\u01B0\u01A1i. C\u1EA5p 2: nhanh h\u01A1n, c\u1EA5p 3: s\u1EA3n l\u01B0\u1EE3ng g\u1EA5p \u0111\xF4i."
@@ -85,9 +75,7 @@ MonoBehaviour:
     buildPrice: 300
     unlockCastleLevel: 1
     footprintSize: {x: 1.8, y: 1.5}
-    upgradePrices:
-    - 150
-    - 250
+    upgradePrices: 96000000fa000000i
     refundRatio: 0.5
     icon: {fileID: 0}
     description: "Ch\u1EBF bi\u1EBFn s\u1EEFa t\u01B0\u01A1i th\xE0nh s\u1EEFa \u0111\xF3ng chai. C\u1EA7n ngu\u1ED3n \u0111i\u1EC7n."

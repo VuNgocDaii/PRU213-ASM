@@ -12,6 +12,12 @@ public class TowersFeature : DefenseModule
 
     protected override void OnConnected()
     {
+        foreach (var slot in Context.Slots)
+        {
+            if (slot == null || slot.SlotKind != DefenseBuildingSlot.Kind.Tower) continue;
+            slot.OnBuilt += ConnectTower;
+            if (slot.Occupant != null) ConnectTower(slot.Occupant);
+        }
         if (shopUI != null) shopUI.Initialize(Context);
         if (actionMenuUI != null) actionMenuUI.Initialize(Context);
         if (battleUI != null) battleUI.Initialize(Context);
@@ -21,6 +27,7 @@ public class TowersFeature : DefenseModule
 
     private void Update()
     {
+        if (Context == null || (Context.Game.State != GameState.Preparing && Context.Game.State != GameState.Fighting)) return;
         // Kiểm tra chuột theo New Input System
         Mouse mouse = Mouse.current;
         if (mouse == null) return;
@@ -34,6 +41,27 @@ public class TowersFeature : DefenseModule
 
             DetectSlotClick(mouse.position.ReadValue());
         }
+    }
+
+    protected override void OnDisconnected()
+    {
+        foreach (var slot in Context.Slots)
+            if (slot != null && slot.SlotKind == DefenseBuildingSlot.Kind.Tower) slot.OnBuilt -= ConnectTower;
+    }
+
+    private void ConnectTower(GameObject occupant)
+    {
+        if (occupant == null || !occupant.TryGetComponent<TowerController>(out var tower)) return;
+        tower.SetContext(Context);
+        var slot = occupant.GetComponentInParent<DefenseBuildingSlot>();
+        var controller = slot != null ? slot.GetComponent<BuildingController>() : null;
+        if (controller == null || tower.Definition == null) return;
+        var definition = tower.Definition;
+        controller.SetBuildConfig(definition.prefab, definition.buildPrice, definition.kind.ToString(),
+            controller.FootprintSize, definition.unlockCastleLevel, .6f);
+        controller.BindDefenseSlot(slot, Context.Progress);
+        var upgrade = slot.GetComponent<BuildingUpgradeController>();
+        if (upgrade != null) upgrade.Configure(controller, definition.upgradePrices, Context.Progress, true);
     }
 
     private void DetectSlotClick(Vector2 screenPosition)

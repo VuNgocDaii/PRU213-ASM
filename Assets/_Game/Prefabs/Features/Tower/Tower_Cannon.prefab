@@ -27,8 +27,8 @@ Transform:
   m_GameObject: {fileID: 7022902706549390322}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.04, y: 0.44, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0.73, z: 0}
+  m_LocalScale: {x: 0.9375, y: 0.9375, z: 0.9375}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2668559366486330269}
@@ -103,7 +103,7 @@ Animator:
   m_GameObject: {fileID: 7022902706549390322}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: ff08f057fb78ebe47a9b9261dd344707, type: 2}
+  m_Controller: {fileID: 9100000, guid: 8541262c2117c704b92b7bf6d784ce98, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -269,6 +269,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a8116962444e2844aaaa639ab7c1757, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FeatureReferences
+  inventory: {fileID: 0}
 --- !u!114 &7125962418270175286
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -282,13 +283,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerController
   definition: {fileID: 11400000, guid: 3222ead6cabffd64a905a218efeb4c19, type: 2}
-  spriteRenderer: {fileID: 0}
+  spriteRenderer: {fileID: 4119683848535604169}
   firePoint: {fileID: 4227641327798118576}
-  projectilePool: {fileID: 0}
+  projectilePool: {fileID: 5929877750443900594}
   levelSprites:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: -4292938964486044048, guid: 7ad5d2ba21169024aba42d4340cec68c, type: 3}
+  - {fileID: -579069412, guid: 7ad5d2ba21169024aba42d4340cec68c, type: 3}
+  - {fileID: 1754984525, guid: 7ad5d2ba21169024aba42d4340cec68c, type: 3}
+  levelWeaponSprites:
+  - {fileID: -2275601651859316098, guid: 290ef5a977985c0428a37c9483a974f6, type: 3}
+  - {fileID: -3029132215716734691, guid: 1155ea5cf360ae244b395a8e93d7139d, type: 3}
+  - {fileID: 7795913589515462447, guid: d0dec01f43656f044916111661189ce4, type: 3}
+  weaponRenderer: {fileID: 3380307677707006760}
+  weaponAnimator: {fileID: 4559500869053422034}
   aoeRadius: 0
   slowMultiplier: 1
   slowDuration: 2.5

@@ -66,7 +66,7 @@ public class DefenseShopUI : MonoBehaviour
 
             if (!isUnlocked && entry.lockReasonText != null)
             {
-                entry.lockReasonText.text = $"Khóa (Thành Lv{entry.definition.unlockCastleLevel})";
+                entry.lockReasonText.text = $"LV {entry.definition.unlockCastleLevel}";
             }
 
             if (entry.costText != null)

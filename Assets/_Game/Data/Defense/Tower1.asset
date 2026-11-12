@@ -19,5 +19,9 @@ MonoBehaviour:
   upgradePrices: 64000000b4000000i
   damage: 190000002600000037000000i
   shotsPerSecond: 0.5
-  range: 3.5
+  range: 7
+  rangeByLevel:
+  - 7
+  - 8.5
+  - 10
   canTargetFlying: 1

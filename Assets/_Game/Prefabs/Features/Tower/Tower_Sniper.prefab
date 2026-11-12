@@ -131,7 +131,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 918707962, guid: 29e50f250390b79458cc1a12a3797e04, type: 3}
+  m_Sprite: {fileID: -3487367343158561858, guid: e537e4a36e64d794a887e8848db51b43, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -155,13 +155,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerController
   definition: {fileID: 11400000, guid: 99ab3911fd6116645ade8d1c9710d173, type: 2}
-  spriteRenderer: {fileID: 0}
+  spriteRenderer: {fileID: 8425818062382318249}
   firePoint: {fileID: 5473744349109274820}
-  projectilePool: {fileID: 0}
+  projectilePool: {fileID: 1341590593094604479}
   levelSprites:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: -3487367343158561858, guid: e537e4a36e64d794a887e8848db51b43, type: 3}
+  - {fileID: -3636027315405992809, guid: e537e4a36e64d794a887e8848db51b43, type: 3}
+  - {fileID: 2380236794648659762, guid: e537e4a36e64d794a887e8848db51b43, type: 3}
+  levelWeaponSprites:
+  - {fileID: -3342237316413297983, guid: 71b89b1a0a4dc12459444814b7590c70, type: 3}
+  - {fileID: -8841547167504621854, guid: 4f348a1f65123c141abdb3fe953b7ec4, type: 3}
+  - {fileID: 5133694766355285195, guid: ff0bf5533b6d5c24ab3f06b9a66fbd25, type: 3}
+  weaponRenderer: {fileID: 94719646200450015}
+  weaponAnimator: {fileID: 5702944684524351281}
   aoeRadius: 0
   slowMultiplier: 1
   slowDuration: 2.5
@@ -177,6 +183,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a8116962444e2844aaaa639ab7c1757, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FeatureReferences
+  inventory: {fileID: 0}
 --- !u!1 &5685240038449303502
 GameObject:
   m_ObjectHideFlags: 0
@@ -204,7 +211,7 @@ Transform:
   m_GameObject: {fileID: 5685240038449303502}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0, y: 0.73, z: 0}
+  m_LocalPosition: {x: 0, y: 0.67999995, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -257,7 +264,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3342237316413297983, guid: 71b89b1a0a4dc12459444814b7590c70, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -280,7 +287,7 @@ Animator:
   m_GameObject: {fileID: 5685240038449303502}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: b5717066c9682814b9f97c96ccb731fc, type: 2}
+  m_Controller: {fileID: 9100000, guid: 8cf00556e5405cf4a98c5a3246f99c5f, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

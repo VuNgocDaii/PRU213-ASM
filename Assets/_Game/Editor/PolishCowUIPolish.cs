@@ -10,9 +10,77 @@ using UnityEngine.UI;
 
 public static class PolishCowUIPolish
 {
-    private static readonly Color Panel = new Color(0.075f,0.13f,0.14f,0.95f);
+    private static readonly Color Panel = new Color(0.075f,0.13f,0.14f,1f);
     private static readonly Color Ink = new Color(0.97f,0.95f,0.87f);
     private static readonly Color Gold = new Color(0.87f,0.72f,0.44f);
+
+    [MenuItem("Tools/PolishCow/Compact Tower Shop HUD")]
+    public static void CompactTowerShopHUD()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Exit Play Mode first.");
+        var scene = SceneManager.GetActiveScene();
+        CompactTowerShop(scene);
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+    }
+
+    public static void CompactTowerShop(Scene scene)
+    {
+        var shop = All<DefenseShopUI>(scene).FirstOrDefault();
+        if (shop == null) return;
+        Rect(shop.GetComponent<RectTransform>(), new Vector2(.5f,0), new Vector2(0,18), new Vector2(400,60));
+        var layout = shop.GetComponent<HorizontalLayoutGroup>();
+        if (layout != null)
+        {
+            layout.padding = new RectOffset(8,8,6,6);
+            layout.spacing = 6;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childControlWidth = layout.childControlHeight = false;
+            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
+        }
+        var data = new SerializedObject(shop);
+        var entries = data.FindProperty("entries");
+        for (int i=0;i<entries.arraySize;i++)
+        {
+            var entry = entries.GetArrayElementAtIndex(i);
+            var button = entry.FindPropertyRelative("button").objectReferenceValue as Button;
+            if (button == null) continue;
+            button.GetComponent<RectTransform>().sizeDelta = new Vector2(90,48);
+            var cost = entry.FindPropertyRelative("costText").objectReferenceValue as TextMeshProUGUI;
+            if (cost != null)
+            {
+                cost.enableAutoSizing = false; cost.fontSize = 14; cost.alignment = TextAlignmentOptions.Center; cost.raycastTarget = false;
+                var r=cost.rectTransform; r.anchorMin=new Vector2(0,1);r.anchorMax=Vector2.one;r.pivot=new Vector2(.5f,1);
+                r.anchoredPosition= new Vector2(0,-3);r.sizeDelta=new Vector2(-8,32);
+            }
+            var overlay = entry.FindPropertyRelative("lockOverlay").objectReferenceValue as GameObject;
+            if (overlay != null)
+            {
+                var r=overlay.GetComponent<RectTransform>();r.anchorMin=Vector2.zero;r.anchorMax=new Vector2(1,0);r.pivot=new Vector2(.5f,0);
+                r.anchoredPosition=new Vector2(0,3);r.sizeDelta=new Vector2(-8,12);
+            }
+            var locked = entry.FindPropertyRelative("lockReasonText").objectReferenceValue as TextMeshProUGUI;
+            if (locked != null)
+            {
+                locked.enableAutoSizing=false;locked.fontSize=9;locked.raycastTarget=false;locked.alignment=TextAlignmentOptions.Center;
+                locked.rectTransform.anchorMin=Vector2.zero;locked.rectTransform.anchorMax=Vector2.one;
+                locked.rectTransform.offsetMin=Vector2.zero;locked.rectTransform.offsetMax=Vector2.zero;
+                var definition=entry.FindPropertyRelative("definition").objectReferenceValue as TowerDefinition;
+                if(definition!=null) locked.text="LV "+definition.unlockCastleLevel;
+            }
+        }
+        // Inventory HUD uses a 1920x1080 canvas; defense HUD uses 1280x720.
+        // Leave the hint above the shop with a gap after accounting for both scales.
+        var player=All<PlayerInteraction>(scene).FirstOrDefault();
+        if(player!=null)
+        {
+            var hint=new SerializedObject(player).FindProperty("interactionHint").objectReferenceValue as TextMeshProUGUI;
+            if(hint!=null) Rect(hint.transform.parent.GetComponent<RectTransform>(),new Vector2(.5f,0),new Vector2(0,145),new Vector2(740,66));
+        }
+        foreach(var component in shop.GetComponentsInChildren<Component>(true)) Record(component);
+        Record(layout);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(shop.GetComponent<RectTransform>());
+    }
 
     [MenuItem("Tools/PolishCow/Polish Main HUD")]
     public static void Apply()
@@ -101,7 +169,7 @@ public static class PolishCowUIPolish
         var hint = (TextMeshProUGUI)new SerializedObject(player).FindProperty("interactionHint").objectReferenceValue;
         if (hint != null)
         {
-            Image hintCard = Card(hud,"InteractionHintCard"); hintCard.color = new Color(0.06f,0.1f,0.11f,0.9f);
+            Image hintCard = Card(hud,"InteractionHintCard"); hintCard.color = new Color(0.06f,0.1f,0.11f,1f);
             Rect(hintCard.rectTransform,new Vector2(0.5f,0),new Vector2(0,38),new Vector2(720,52));
             hint.transform.SetParent(hintCard.transform,false); Style(hint,font,22,Ink); hint.alignment = TextAlignmentOptions.Center;
             hint.rectTransform.anchorMin = Vector2.zero; hint.rectTransform.anchorMax = Vector2.one; hint.rectTransform.offsetMin = new Vector2(16,4); hint.rectTransform.offsetMax = new Vector2(-16,-4);
@@ -109,6 +177,7 @@ public static class PolishCowUIPolish
         }
         var controls = Text(hud,"ControlLegend","WASD / Mũi tên: di chuyển     ·     E: tương tác",font,16,new Color(0.94f,0.96f,0.9f,0.85f),Vector2.zero,new Vector2(800,24));
         Rect(controls.rectTransform,new Vector2(0.5f,0),new Vector2(0,10),new Vector2(800,24)); controls.alignment = TextAlignmentOptions.Center;
+        CompactTowerShop(scene);
         foreach (ProductionMachine machine in All<ProductionMachine>(scene))
         {
             Transform statusTransform = machine.transform.Find("StatusText");

@@ -18,6 +18,13 @@ public class DefenseBuildingSlot : MonoBehaviour
     private bool isBuilding;
     private void Awake() { Occupant = initialOccupant; }
 
+    public bool ReleaseOccupant(GameObject expected)
+    {
+        if (expected == null || Occupant != expected || isBuilding) return false;
+        Occupant = null;
+        return true;
+    }
+
     public bool TryBuild(GameObject prefab, int price, Kind requestedKind, int unlockCastleLevel = 1)
     {
         if (!IsUnlocked || requestedKind != kind || progress.CurrentLevel < unlockCastleLevel || isBuilding || Occupant != null || price <= 0 ||

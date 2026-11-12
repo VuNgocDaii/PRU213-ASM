@@ -10,18 +10,18 @@ Sprite:
   m_Name: Tree
   m_Rect:
     serializedVersion: 2
-    x: 0
-    y: 48
-    width: 16
-    height: 32
-  m_Offset: {x: 0, y: -16}
+    x: 19
+    y: 47
+    width: 26
+    height: 33
+  m_Offset: {x: 0, y: -16.5}
   m_Border: {x: 0, y: 0, z: 0, w: 0}
   m_PixelsToUnits: 16
   m_Pivot: {x: 0.5, y: 0}
   m_Extrude: 0
   m_PackingTag: 
   m_RenderDataKey:
-    00000000000000000000000000000000: 0
+    c5ba0aec5ed3e7147a93fdba1954fecc: 21300000
   m_AtlasTags: []
   m_SpriteAtlas: {fileID: 0}
   m_RD:
@@ -102,7 +102,7 @@ Sprite:
         format: 0
         dimension: 0
       m_DataSize: 80
-      _typelessdata: 000000bf00000040000000000000003f0000004000000000000000bf00000000000000000000003f00000000000000000000000000000000000000000000000000000000000000000000000000000000
+      _typelessdata: 000050bf00000440000000000000503f0000044000000000000050bf00000000000000000000503f00000000000000000000000000000000000000000000000000000000000000000000000000000000
     m_Bindpose: []
     m_BlendShapes:
       vertices: []
@@ -111,14 +111,14 @@ Sprite:
       fullWeights: []
     textureRect:
       serializedVersion: 2
-      x: 0
-      y: 48
-      width: 16
-      height: 32
+      x: 19
+      y: 47
+      width: 26
+      height: 33
     textureRectOffset: {x: 0, y: 0}
     atlasRectOffset: {x: -1, y: -1}
     settingsRaw: 3072
-    uvTransform: {x: 16, y: 8, z: 16, w: 48}
+    uvTransform: {x: 16, y: 32, z: 16, w: 47}
     downscaleMultiplier: 1
   m_AtlasRD:
     serializedVersion: 4
@@ -198,7 +198,7 @@ Sprite:
         format: 0
         dimension: 0
       m_DataSize: 80
-      _typelessdata: 000000bf00000040000000000000003f0000004000000000000000bf00000000000000000000003f00000000000000000000000000000000000000000000000000000000000000000000000000000000
+      _typelessdata: 000050bf00000440000000000000503f0000044000000000000050bf00000000000000000000503f00000000000000000000000000000000000000000000000000000000000000000000000000000000
     m_Bindpose: []
     m_BlendShapes:
       vertices: []
@@ -207,14 +207,14 @@ Sprite:
       fullWeights: []
     textureRect:
       serializedVersion: 2
-      x: 0
-      y: 48
-      width: 16
-      height: 32
+      x: 19
+      y: 47
+      width: 26
+      height: 33
     textureRectOffset: {x: 0, y: 0}
     atlasRectOffset: {x: -1, y: -1}
     settingsRaw: 3072
-    uvTransform: {x: 16, y: 8, z: 16, w: 48}
+    uvTransform: {x: 16, y: 32, z: 16, w: 47}
     downscaleMultiplier: 1
   m_PhysicsShape: []
   m_Bones: []

@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 1814538200795133971}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.02, y: 0.72, z: 0}
+  m_LocalPosition: {x: 0, y: 0.64, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -103,7 +103,7 @@ Animator:
   m_GameObject: {fileID: 1814538200795133971}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 9cd8979c9e2d108448bd0812bd5b0826, type: 2}
+  m_Controller: {fileID: 9100000, guid: 50eef4563d3702749b50298881d4d40d, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -223,6 +223,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a8116962444e2844aaaa639ab7c1757, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FeatureReferences
+  inventory: {fileID: 0}
 --- !u!114 &3495924939778479131
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -236,13 +237,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerController
   definition: {fileID: 11400000, guid: c15371c2c4074a245a1b110ef1d6d25a, type: 2}
-  spriteRenderer: {fileID: 0}
+  spriteRenderer: {fileID: 8477662455783412677}
   firePoint: {fileID: 3024237188535970459}
-  projectilePool: {fileID: 0}
+  projectilePool: {fileID: 309142887697759750}
   levelSprites:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: -5901685104126582622, guid: f3112e21c05a7e443b4713b2acbe67f3, type: 3}
+  - {fileID: -585980945, guid: f3112e21c05a7e443b4713b2acbe67f3, type: 3}
+  - {fileID: -1083395697, guid: f3112e21c05a7e443b4713b2acbe67f3, type: 3}
+  levelWeaponSprites:
+  - {fileID: 6348413185770706182, guid: bc2fb03b89a16cb44ae17d59dd8e7a1b, type: 3}
+  - {fileID: 5187183930917089836, guid: a2ffc2b7003d21542b2a7fe210a1f099, type: 3}
+  - {fileID: 1014366407181676764, guid: 1c2f68ee67464da4cbe86cb59f8c9240, type: 3}
+  weaponRenderer: {fileID: 5094282136683756537}
+  weaponAnimator: {fileID: 4524573057124156617}
   aoeRadius: 0
   slowMultiplier: 1
   slowDuration: 2.5
