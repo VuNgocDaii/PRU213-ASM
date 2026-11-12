@@ -1,4 +1,3 @@
-using System.Reflection;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -8,11 +7,8 @@ public class MedicineShop : Interactable
     [SerializeField] private FeatureReferences featureReferences;
 
     [Header("Cấu hình Shop Thuốc")]
-    [SerializeField, Min(1)] private int medicineCost = 20;     // 20 Credits
-    [SerializeField, Min(1)] private int medicineAmount = 1;   // 1 Medicine
-
-    private static readonly FieldInfo InteractionTextField =
-        typeof(Interactable).GetField("interactionText", BindingFlags.NonPublic | BindingFlags.Instance);
+    [SerializeField, Min(1)] private int medicineCost = 20;    // Cần 20 Credits
+    [SerializeField, Min(1)] private int medicineAmount = 1;  // Nhận được 1 Medicine
 
     private void Awake()
     {
@@ -30,10 +26,10 @@ public class MedicineShop : Interactable
 
     public override void Interact()
     {
-        InventoryManager inventory = InventoryManager.Instance;
+        var inventory = GetInventory();
         if (inventory == null)
         {
-            Debug.LogError($"{name}: MedicineShop chưa kết nối được với Inventory!", this);
+            Debug.LogError($"{name}: MedicineShop chưa được Initialize FeatureReferences!", this);
             return;
         }
 
@@ -44,30 +40,35 @@ public class MedicineShop : Interactable
             return;
         }
 
+        // Kiểm tra tràn số lượng Medicine trong kho
         if (inventory.GetAmount(ItemType.Medicine) > int.MaxValue - medicineAmount)
         {
             Debug.LogWarning("MedicineShop: Kho thuốc đã đầy!");
             return;
         }
 
+        // Trừ Credits và cộng Medicine
         if (inventory.TryRemove(ItemType.Credits, medicineCost))
         {
             inventory.Add(ItemType.Medicine, medicineAmount);
             Debug.Log($"MedicineShop: Đã mua thành công {medicineAmount} Medicine với giá {medicineCost} Credits!");
+            UpdateHintText();
         }
     }
 
     private void UpdateHintText()
     {
-        if (InteractionTextField != null)
-        {
-            InteractionTextField.SetValue(this, $"Mua {medicineAmount} Thuốc ({medicineCost} Credits)");
-        }
+        var field = typeof(Interactable).GetField("interactionText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        field?.SetValue(this, $"Mua {medicineAmount} Thuốc ({medicineCost} Credits)");
     }
 
-    [ContextMenu("Test/Buy Medicine Now")]
-    public void TestBuyMedicine()
+    private InventoryManager GetInventory()
     {
-        Interact();
+        if (featureReferences != null && featureReferences.Inventory != null)
+        {
+            return featureReferences.Inventory;
+        }
+
+        return InventoryManager.Instance;
     }
 }

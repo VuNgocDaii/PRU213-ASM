@@ -32,26 +32,20 @@ public class CowController : MonoBehaviour
     public void Initialize(FeatureReferences references, CowUpgrade upgrade = null, CowHealth health = null)
     {
         featureReferences = references;
-        if (upgrade != null)
-        {
-            cowUpgrade = upgrade;
-        }
-        if (health != null)
-        {
-            cowHealth = health;
-        }
+        if (upgrade != null) cowUpgrade = upgrade;
+        if (health != null) cowHealth = health;
     }
 
     private void Awake()
     {
+        if (featureReferences == null) featureReferences = GetComponentInParent<FeatureReferences>();
+        if (cowUpgrade == null) cowUpgrade = GetComponentInParent<CowUpgrade>();
+        if (cowHealth == null) cowHealth = GetComponent<CowHealth>();
     }
 
     private void Update()
     {
-        if (currentState != CowState.Producing)
-        {
-            return;
-        }
+        if (currentState != CowState.Producing) return;
 
         remainingTime -= Time.deltaTime;
         if (remainingTime <= 0f)
@@ -64,28 +58,24 @@ public class CowController : MonoBehaviour
 
     public bool TryFeed()
     {
-        InventoryManager inventory = InventoryManager.Instance;
-        if (inventory == null)
+        if (featureReferences == null || featureReferences.Inventory == null)
         {
-            Debug.LogWarning("[CowController] Chưa kết nối được với Inventory.", this);
+            Debug.LogWarning("[CowController] Chưa được Initialize FeatureReferences với kho hợp lệ.", this);
             return false;
         }
 
-        if (currentState != CowState.Idle)
-        {
-            return false;
-        }
+        if (currentState != CowState.Idle) return false;
 
+        InventoryManager inventory = featureReferences.Inventory;
         int feedCost = RequiredFeedCost;
         int milkAmount = ExpectedMilkAmount;
-
         float baseDuration = cowUpgrade != null ? cowUpgrade.ProductionDuration : 10f;
         float diseaseMult = cowHealth != null ? cowHealth.DurationMultiplier : 1f;
         float duration = baseDuration * diseaseMult;
 
         if (milkAmount <= 0 || inventory.GetAmount(ItemType.RawMilk) > int.MaxValue - milkAmount || inventory.GetAmount(ItemType.SpoiledMilk) > int.MaxValue - milkAmount)
         {
-            Debug.LogWarning("[CowController] Kho sữa đã đầy hoặc số lượng sản phẩm không hợp lệ.", this);
+            Debug.LogWarning("[CowController] Kho sữa đã đầy hoặc số lượng không hợp lệ.", this);
             return false;
         }
 
@@ -106,17 +96,15 @@ public class CowController : MonoBehaviour
 
     public bool TryCollectMilk()
     {
-        InventoryManager inventory = InventoryManager.Instance;
-        if (inventory == null)
+        if (featureReferences == null || featureReferences.Inventory == null)
         {
-            Debug.LogWarning("[CowController] Chưa kết nối được với Inventory.", this);
+            Debug.LogWarning("[CowController] Chưa được Initialize FeatureReferences với kho hợp lệ.", this);
             return false;
         }
 
-        if (currentState != CowState.Ready)
-        {
-            return false;
-        }
+        if (currentState != CowState.Ready) return false;
+
+        InventoryManager inventory = featureReferences.Inventory;
 
         if (lockedMilkAmount <= 0 || inventory.GetAmount(ItemType.RawMilk) > int.MaxValue - lockedMilkAmount || inventory.GetAmount(ItemType.SpoiledMilk) > int.MaxValue - lockedMilkAmount)
         {
@@ -134,8 +122,7 @@ public class CowController : MonoBehaviour
 
     private void AddMilkByDisease(InventoryManager inventory, int milkAmount)
     {
-        var health = cowHealth;
-        DiseaseLevel disease = health != null ? health.CurrentDisease : DiseaseLevel.Healthy;
+        DiseaseLevel disease = cowHealth != null ? cowHealth.CurrentDisease : DiseaseLevel.Healthy;
 
         switch (disease)
         {
@@ -145,15 +132,11 @@ public class CowController : MonoBehaviour
                 break;
 
             case DiseaseLevel.Moderate:
-                int earned = health != null ? health.AccumulateMilk(milkAmount * 0.5f) : milkAmount;
+                int earned = cowHealth != null ? cowHealth.AccumulateMilk(milkAmount * 0.5f) : milkAmount;
                 if (earned > 0)
                 {
                     inventory.Add(ItemType.RawMilk, earned);
                     Debug.Log($"[CowController] Bò bệnh Moderate: tích lũy đủ → +{earned} RawMilk.", this);
-                }
-                else
-                {
-                    Debug.Log($"[CowController] Bò bệnh Moderate: tích lũy {health?.MilkAccumulator ?? 0f:F1}/1.0 chưa đủ.", this);
                 }
                 break;
 

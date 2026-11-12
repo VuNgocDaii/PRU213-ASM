@@ -72,7 +72,6 @@ public class CowHealthUI : MonoBehaviour
         label.fontSize = labelFontSize;
         label.color = Color.white;
         label.raycastTarget = false;
-        
 
         if (TMP_Settings.defaultFontAsset != null)
         {
@@ -103,18 +102,22 @@ public class CowHealthUI : MonoBehaviour
         {
             case DiseaseLevel.Mild:
                 statusLabel.text = "Bệnh nhẹ (x1.5s)";
-                statusLabel.color = Color.yellow;
+                statusLabel.color = new Color(1f, 0.85f, 0f);     
                 break;
 
             case DiseaseLevel.Moderate:
                 statusLabel.text = "Bệnh vừa (x2s, 50% sữa)";
-                statusLabel.color = new Color(1f, 0.5f, 0f); // Orange
+                statusLabel.color = new Color(1f, 0.45f, 0f);     
                 break;
 
             case DiseaseLevel.Severe:
                 statusLabel.text = "Bệnh nặng (Sữa hỏng)";
-                statusLabel.color = Color.red;
+                statusLabel.color = new Color(1f, 0.15f, 0.15f);  
                 break;
         }
+
+        statusLabel.fontStyle = FontStyles.Bold;
+        statusLabel.outlineColor = Color.black;
+        statusLabel.outlineWidth = 0.25f;
     }
 }
