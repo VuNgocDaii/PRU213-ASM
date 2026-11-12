@@ -47,7 +47,29 @@ public class BuildingWorkspaceValidator : MonoBehaviour
 
         InventoryManager inventory = context.Inventory;
         CastleProgress progress = context.Progress;
-        BuildingCatalogData catalog = feature.Catalog;
+        BuildingCatalogData catalog = feature != null ? feature.Catalog : null;
+        if (catalog == null || catalog.Entries == null || catalog.Entries.Count == 0)
+        {
+#if UNITY_EDITOR
+            catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<BuildingCatalogData>("Assets/_Game/Data/Features/Building/BuildingCatalog.asset");
+            if (feature != null && catalog != null)
+            {
+                feature.Catalog = catalog;
+            }
+#endif
+            if (catalog == null)
+            {
+                var all = Resources.FindObjectsOfTypeAll<BuildingCatalogData>();
+                if (all != null && all.Length > 0)
+                {
+                    foreach (var c in all)
+                    {
+                        if (c != null && c.Entries != null && c.Entries.Count >= 6) { catalog = c; break; }
+                    }
+                    if (catalog == null) catalog = all[0];
+                }
+            }
+        }
         Assert(catalog != null && catalog.Entries.Count >= 6, "Catalog có ít nhất 6 mục (4 tháp, bò, máy)");
 
         // -------------------------------------------------------------

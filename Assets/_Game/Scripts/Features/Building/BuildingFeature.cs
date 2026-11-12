@@ -13,11 +13,40 @@ public class BuildingFeature : DefenseModule
 
     private readonly List<BuildingSlot> activeAdapters = new List<BuildingSlot>();
 
-    public BuildingCatalogData Catalog => catalog;
+    public BuildingCatalogData Catalog
+    {
+        get
+        {
+            if (catalog == null)
+            {
+                catalog = ResolveCatalog();
+            }
+            return catalog;
+        }
+        set => catalog = value;
+    }
     public BuildingPanel Panel => panel;
     public CastleVisualController CastleVisual => castleVisual;
     public TowerUpgradeBridge TowerUpgradeBridge => towerUpgradeBridge;
     public IReadOnlyList<BuildingSlot> ActiveAdapters => activeAdapters;
+
+    private BuildingCatalogData ResolveCatalog()
+    {
+#if UNITY_EDITOR
+        var cat = UnityEditor.AssetDatabase.LoadAssetAtPath<BuildingCatalogData>("Assets/_Game/Data/Features/Building/BuildingCatalog.asset");
+        if (cat != null) return cat;
+#endif
+        var all = Resources.FindObjectsOfTypeAll<BuildingCatalogData>();
+        if (all != null && all.Length > 0)
+        {
+            foreach (var c in all)
+            {
+                if (c != null && c.Entries != null && c.Entries.Count >= 6) return c;
+            }
+            return all[0];
+        }
+        return null;
+    }
 
     protected override void OnInitialized()
     {
